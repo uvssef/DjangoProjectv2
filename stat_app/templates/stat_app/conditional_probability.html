@@ -1,0 +1,257 @@
+{% extends 'stat_app/base.html' %}
+
+{% block title %}Probabilité Conditionnelle, Bayes & Venn — Statistiques & Probabilités{% endblock %}
+{% block page_title %}6. Probabilité Conditionnelle & Théorème de Bayes{% endblock %}
+{% block page_subtitle %}Intersection, Union, Théorème de Bayes, Arbres pondérés et Diagrammes de Venn{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- ============================================================== -->
+    <!-- 1. PARAMÈTRES INTERACTIFS (TEST DIAGNOSTIQUE / BAYES)         -->
+    <!-- ============================================================== -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+            <div>
+                <h3 class="font-bold text-slate-900 text-sm">Modèle Interactif : Test de Dépistage & Théorème de Bayes</h3>
+                <p class="text-xs text-slate-500">Exemple concret du cours : Événement B (maladie présente) et Événement A (test positif).</p>
+            </div>
+            <a href="?p_b=0.01&p_a_given_b=0.95&p_a_given_not_b=0.05&venn_mode=A_inter_B" class="text-xs px-3 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold rounded-xl transition">
+                Exemple classique (1% prévalence)
+            </a>
+        </div>
+
+        <form method="GET" action="{% url 'stat_app:conditional' %}" class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4 items-end">
+            <!-- P(B) -->
+            <div>
+                <label for="inputPB" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Probabilité a priori P(B) :
+                </label>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="inputPB" name="p_b" value="{{ cond.inputs.p_b }}" min="0.001" max="0.999" step="0.005"
+                           class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <span class="text-[10px] text-slate-400 mt-1 block">Ex: Prévalence = 1 % (0.01)</span>
+            </div>
+
+            <!-- P(A|B) -->
+            <div>
+                <label for="inputPAB" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Sensibilité P(A|B) :
+                </label>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="inputPAB" name="p_a_given_b" value="{{ cond.inputs.p_a_given_b }}" min="0.01" max="1.0" step="0.01"
+                           class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <span class="text-[10px] text-slate-400 mt-1 block">Test positif sachant B vrai (ex: 95%)</span>
+            </div>
+
+            <!-- P(A|B') -->
+            <div>
+                <label for="inputPANotB" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Faux positifs P(A|B') :
+                </label>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="inputPANotB" name="p_a_given_not_b" value="{{ cond.inputs.p_a_given_not_b }}" min="0.001" max="0.5" step="0.01"
+                           class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <span class="text-[10px] text-slate-400 mt-1 block">Test positif à tort (ex: 5%)</span>
+            </div>
+
+            <input type="hidden" name="venn_mode" value="{{ venn_mode }}">
+
+            <div>
+                <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    Calculer Bayes & Arbre
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 2. CARTES DU THÉORÈME DE BAYES & PROBABILITÉ TOTALE            -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- THÉORÈME DE BAYES -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 flex flex-col justify-between space-y-4">
+            <div>
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                        <span class="text-xs font-semibold text-brand-600 uppercase tracking-wider">Concept Clé</span>
+                        <h4 class="text-base font-bold text-slate-900">Théorème de Bayes — Démonstration du Cours</h4>
+                    </div>
+                    <div class="w-9 h-9 rounded-xl bg-brand-50 text-brand-700 flex items-center justify-center font-bold text-sm">
+                        $P(B|A)$
+                    </div>
+                </div>
+
+                <!-- Résultat Numérique Majeur -->
+                <div class="p-4 bg-brand-50/70 rounded-xl border border-brand-200 text-center my-3">
+                    <span class="text-xs text-brand-800 font-medium block mb-1">Probabilité a posteriori $P(B|A)$ :</span>
+                    <span class="text-3xl font-black text-brand-700 font-mono tracking-tight">{{ cond.p_b_given_a_percent }}</span>
+                    <span class="text-xs text-slate-500 block mt-1">(Probabilité que B soit vrai sachant que le test A est positif)</span>
+                </div>
+
+                <!-- Formule de Bayes -->
+                <div class="space-y-1">
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Formule mathématique :</h5>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-center text-xs font-serif overflow-x-auto">
+                        $${{ cond.bayes.formula_latex }}$$
+                    </div>
+                </div>
+
+                <!-- Démonstration pas à pas issue du PDF de Pr. CHADI -->
+                <div class="mt-3">
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Démonstration & Calcul pas à pas :</h5>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/60 font-mono text-xs overflow-x-auto text-center mb-2">
+                        $${{ cond.bayes.calculation_latex }}$$
+                    </div>
+                    <ul class="space-y-1 text-xs text-slate-600 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                        {% for step in cond.bayes.steps %}
+                        <li class="flex items-start gap-1.5">
+                            <span class="text-brand-500 font-bold">•</span>
+                            <span>{{ step }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Interprétation intuitive pour l'étudiant -->
+            <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-950 leading-relaxed">
+                <span class="font-bold block mb-1">💡 Paradoxe des faux positifs expliqué à l'étudiant :</span>
+                {{ cond.bayes.interpretation }}
+            </div>
+        </div>
+
+        <!-- THÉORÈME DE PROBABILITÉ TOTALE & ARBRE DE PROBABILITÉS -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 flex flex-col justify-between space-y-4">
+            <div>
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                        <span class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Fondement</span>
+                        <h4 class="text-base font-bold text-slate-900">Théorème de Probabilité Totale & Branches</h4>
+                    </div>
+                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                        $P(A)$
+                    </div>
+                </div>
+
+                <!-- Résultat P(A) -->
+                <div class="p-4 bg-emerald-50/70 rounded-xl border border-emerald-200 text-center my-3">
+                    <span class="text-xs text-emerald-800 font-medium block mb-1">Probabilité totale de l'événement A :</span>
+                    <span class="text-3xl font-black text-emerald-700 font-mono tracking-tight">{{ cond.p_a }}</span>
+                    <span class="text-xs text-slate-500 block mt-1">(Dénominateur de la formule de Bayes)</span>
+                </div>
+
+                <!-- Formule probabilité totale -->
+                <div class="space-y-1">
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Formule :</h5>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-center text-xs font-serif overflow-x-auto">
+                        $${{ cond.total_probability.formula_latex }}$$
+                    </div>
+                    <div class="bg-slate-50 p-2 rounded-xl border border-slate-200/60 text-center font-mono text-xs overflow-x-auto text-slate-800">
+                        $${{ cond.total_probability.calculation_latex }}$$
+                    </div>
+                </div>
+
+                <!-- Branches de l'arbre et intersections -->
+                <div class="mt-3">
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Branches & Produits le long du chemin :</h5>
+                    <div class="border border-slate-200 rounded-xl overflow-hidden text-xs">
+                        <table class="w-full text-left font-mono">
+                            <thead class="bg-slate-100 text-slate-600 text-[11px]">
+                                <tr>
+                                    <th class="p-2">Chemin</th>
+                                    <th class="p-2">Intersection</th>
+                                    <th class="p-2">Produit</th>
+                                    <th class="p-2">Probabilité</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for b in cond.tree_branches %}
+                                <tr class="border-t border-slate-100 hover:bg-slate-50">
+                                    <td class="p-2 text-slate-800 font-bold font-sans">{{ b.path }}</td>
+                                    <td class="p-2 text-brand-600">${{ b.expr }}$</td>
+                                    <td class="p-2 text-slate-500">${{ b.calc }}$</td>
+                                    <td class="p-2 text-slate-900 font-bold">{{ b.val }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Complément : Union et Intersection -->
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs flex justify-between items-center">
+                <span>Union : $P(A \cup B) = P(A) + P(B) - P(A \cap B)$</span>
+                <span class="font-bold font-mono text-brand-600 text-sm">{{ cond.p_a_union_b }}</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 3. VISUALISATION : ARBRE PONDÉRÉ DE PROBABILITÉS               -->
+    <!-- ============================================================== -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+        <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-1">Visualisation Graphique : Arbre Pondéré de Probabilités</h4>
+        <p class="text-xs text-slate-500 mb-4">Sur un arbre, on multiplie les probabilités le long des branches pour obtenir l'intersection finale.</p>
+        <div class="bg-slate-50 rounded-xl p-2 flex items-center justify-center border border-slate-100">
+            {% if chart_tree %}
+            <img src="{{ chart_tree }}" alt="Arbre pondéré de probabilités" class="max-w-full h-auto rounded-lg">
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 4. DIAGRAMMES DE VENN (6 RÉGIONS DU COURS COMMUTABLES)         -->
+    <!-- ============================================================== -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <div>
+                <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Diagrammes de Venn — Lecture Interactive des 6 Régions du Cours</h4>
+                <p class="text-xs text-slate-500">Chaque diagramme représente le même univers Ω contenant A et B ; seule la zone colorée change de sens.</p>
+            </div>
+        </div>
+
+        <!-- 6 Boutons de commutation des régions -->
+        <div class="flex flex-wrap gap-2 mb-6">
+            {% for r in cond.venn_regions %}
+            <a href="?p_b={{ cond.inputs.p_b }}&p_a_given_b={{ cond.inputs.p_a_given_b }}&p_a_given_not_b={{ cond.inputs.p_a_given_not_b }}&venn_mode={{ r.code }}"
+               class="px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 {% if venn_mode == r.code %}bg-brand-600 text-white shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                <span>{{ r.title }}</span>
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- Diagramme Matplotlib rendu -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+            <div class="md:col-span-2 bg-slate-50 rounded-xl p-2 flex items-center justify-center border border-slate-100">
+                {% if chart_venn %}
+                <img src="{{ chart_venn }}" alt="Diagramme de Venn" class="max-w-full h-auto rounded-lg">
+                {% endif %}
+            </div>
+
+            <div class="space-y-3 p-4 bg-slate-50/70 rounded-xl border border-slate-200/60 text-xs">
+                <span class="font-bold text-slate-800 uppercase tracking-wider text-[11px] block">Région actuellement visualisée :</span>
+                {% for r in cond.venn_regions %}
+                {% if r.code == venn_mode %}
+                <div class="p-3 bg-white rounded-lg border border-brand-200 shadow-2xs">
+                    <span class="font-bold text-brand-700 block mb-1">{{ r.title }}</span>
+                    <p class="text-slate-600 leading-relaxed">{{ r.desc }}</p>
+                </div>
+                {% endif %}
+                {% endfor %}
+                <p class="text-[11px] text-slate-400 italic">
+                    Cliquez sur les différents boutons ci-dessus pour observer comment les sous-ensembles changent instantanément sur le diagramme de Venn généré par Matplotlib.
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

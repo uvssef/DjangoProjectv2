@@ -1,0 +1,484 @@
+{% extends 'stat_app/base.html' %}
+
+{% block title %}Visualisation des Données — StatLab{% endblock %}
+{% block page_title %}Visualisation des Données{% endblock %}
+{% block page_subtitle %}Explorez vos données réelles à travers 7 représentations graphiques interactives{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- ============================================================== -->
+    <!-- 1. BANNIÈRE RÉSUMÉ DU JEU DE DONNÉES ACTIF                     -->
+    <!-- ============================================================== -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                </svg>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Données réelles en cours d'analyse</h3>
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-mono">
+                        {{ dataset_count }} observations
+                    </span>
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-mono">
+                        Moyenne : {{ dataset_mean }}
+                    </span>
+                </div>
+                <p class="text-xs font-mono text-slate-800 font-medium truncate max-w-xl mt-0.5" title="{{ dataset_source }}">
+                    Source : {{ dataset_source }} &bull; [ {% for v in dataset|slice:":12" %}{{ v|floatformat:2 }}{% if not forloop.last %}, {% endif %}{% endfor %}{% if dataset|length > 12 %}...{% endif %} ]
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <button onclick="openDataModal()" class="text-xs px-3.5 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold rounded-xl transition flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                Modifier / Importer Excel
+            </button>
+            <a href="{% url 'stat_app:export_excel' %}" class="text-xs px-3.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold rounded-xl transition flex items-center gap-1.5" title="Télécharger les données sous forme Excel">
+                <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Exporter Excel
+            </a>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 2. SÉLECTION DES 7 TYPES DE GRAPHIQUES (CARTES & SÉLECTEUR)     -->
+    <!-- ============================================================== -->
+    <div class="space-y-3">
+        <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Choisir une représentation graphique :</h3>
+            <a href="?chart=all" class="text-xs px-3 py-1.5 rounded-xl font-semibold transition flex items-center gap-1.5 {% if chart_id == 'all' %}bg-brand-600 text-white shadow-xs{% else %}bg-white border border-slate-200 text-slate-700 hover:bg-slate-50{% endif %}">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                <span>Vue d'ensemble (Les 7 graphiques)</span>
+            </a>
+        </div>
+
+        <!-- Grille des 7 cartes de sélection -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5">
+            {% for item in chart_catalog %}
+            <a href="?chart={{ item.id }}"
+               class="p-3 rounded-2xl border transition text-left flex flex-col justify-between group {% if chart_id == item.id %}bg-brand-50/80 border-brand-500 shadow-xs ring-2 ring-brand-500/20{% else %}bg-white border-slate-200/80 hover:border-brand-300 hover:bg-slate-50/60 shadow-2xs{% endif %}">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xl">{{ item.icon }}</span>
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full {% if chart_id == item.id %}bg-brand-600 text-white{% else %}bg-slate-100 text-slate-500 group-hover:bg-brand-100 group-hover:text-brand-700{% endif %}">
+                            #{{ forloop.counter }}
+                        </span>
+                    </div>
+                    <h4 class="text-xs font-bold {% if chart_id == item.id %}text-brand-900{% else %}text-slate-800 group-hover:text-brand-700{% endif %} leading-snug">
+                        {{ item.title }}
+                    </h4>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-2 font-medium line-clamp-2 leading-tight">
+                    {{ item.subtitle }}
+                </p>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    {% if dataset_count == 0 %}
+    <!-- AUCUNE DONNÉE -->
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 text-amber-800 text-sm text-center">
+        <p class="font-bold mb-1">Aucune observation disponible pour générer les graphiques.</p>
+        <p class="text-xs text-amber-700 mb-3">Veuillez saisir une série de nombres ou importer un fichier Excel.</p>
+        <button onclick="loadPreset('cours')" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs shadow-xs transition">
+            Charger l'exemple du cours (7 valeurs)
+        </button>
+    </div>
+
+    {% elif chart_id == 'all' %}
+    <!-- ============================================================== -->
+    <!-- VUE D'ENSEMBLE : LES 7 GRAPHIQUES AFFICHÉS ENSEMBLE            -->
+    <!-- ============================================================== -->
+    <div class="space-y-8">
+        <div class="bg-indigo-50 border border-indigo-200/70 rounded-2xl p-4 text-xs text-indigo-900 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <span class="text-base">📋</span>
+                <span class="font-bold">Affichage simultané des 7 graphiques statistiques</span> pour les {{ dataset_count }} observations actuelles.
+            </div>
+            <span class="font-mono text-indigo-700 font-semibold text-[11px]">Généré avec Matplotlib & Seaborn</span>
+        </div>
+
+        {% for res in all_results %}
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+            <div class="flex flex-wrap items-center justify-between pb-3 border-b border-slate-100 gap-3">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">{{ res.icon }}</span>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-brand-50 text-brand-700">#{{ forloop.counter }}</span>
+                            <h4 class="text-base font-bold text-slate-900">{{ res.title }}</h4>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">{{ res.meta.subtitle }}</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <a href="?chart={{ res.chart_id }}" class="text-xs px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition">
+                        Configurer les options &rarr;
+                    </a>
+                    {% if res.success %}
+                    <a href="{% url 'stat_app:download_chart_png' res.chart_id %}"
+                       download="statlab_{{ res.chart_id }}.png"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 text-xs font-semibold rounded-xl transition shadow-2xs">
+                        <svg class="w-3.5 h-3.5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        Télécharger PNG
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if res.success %}
+            <div class="bg-slate-50 rounded-xl p-2 flex items-center justify-center border border-slate-100">
+                <img src="{{ res.b64_image }}" alt="{{ res.title }}" class="max-w-full h-auto rounded-lg shadow-2xs">
+            </div>
+
+            <!-- Interprétation -->
+            {% if res.interpretation %}
+            <div class="p-4 bg-slate-50/70 rounded-xl border border-slate-200/80 text-xs text-slate-800 space-y-2">
+                <div class="flex items-center gap-1.5 font-bold text-slate-900">
+                    <span class="text-brand-600">💡</span>
+                    <span>{{ res.interpretation.title }}</span>
+                </div>
+                <ul class="space-y-1.5 pl-4 list-disc text-slate-700 leading-relaxed">
+                    {% for pt in res.interpretation.points %}
+                    <li>{{ pt|safe }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% else %}
+            <!-- Erreur données insuffisantes -->
+            <div class="p-4 bg-amber-50 rounded-xl border border-amber-200 text-amber-800 text-xs">
+                <p class="font-bold">⚠️ Données insuffisantes</p>
+                <p class="mt-1">{{ res.error }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <!-- ============================================================== -->
+    <!-- 3. VUE INDIVIDUELLE DU GRAPHIQUE SÉLECTIONNÉ AVEC SES OPTIONS  -->
+    <!-- ============================================================== -->
+
+    <!-- BARRE D'OPTIONS SPÉCIFIQUES AU TYPE DE GRAPHIQUE -->
+    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+            <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" /></svg>
+                <h4 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Options du graphique : {{ current_chart_meta.title }}</h4>
+            </div>
+            <span class="text-[11px] text-slate-400">Modifiez les paramètres pour recalculer et redessiner</span>
+        </div>
+
+        <form method="GET" action="{% url 'stat_app:visualizations' %}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-end text-xs">
+            <input type="hidden" name="chart" value="{{ chart_id }}">
+
+            <!-- OPTIONS HISTOGRAMME -->
+            {% if chart_id == 'histogram' %}
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Intervalles / Bins :</label>
+                <select name="bins" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-xs font-medium text-slate-800">
+                    <option value="auto" {% if options.bins == 'auto' %}selected{% endif %}>Automatique (Racine carrée)</option>
+                    <option value="4" {% if options.bins == '4' %}selected{% endif %}>4 classes</option>
+                    <option value="6" {% if options.bins == '6' %}selected{% endif %}>6 classes</option>
+                    <option value="8" {% if options.bins == '8' %}selected{% endif %}>8 classes</option>
+                    <option value="10" {% if options.bins == '10' %}selected{% endif %}>10 classes</option>
+                    <option value="15" {% if options.bins == '15' %}selected{% endif %}>15 classes</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Courbe de densité KDE :</label>
+                <select name="show_kde" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="true" {% if options.show_kde == 'true' %}selected{% endif %}>Afficher la courbe KDE lissée</option>
+                    <option value="false" {% if options.show_kde == 'false' %}selected{% endif %}>Masquer la courbe KDE</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Repères Moyenne & Médiane :</label>
+                <select name="show_stats" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="true" {% if options.show_stats == 'true' %}selected{% endif %}>Afficher x̄ et Me</option>
+                    <option value="false" {% if options.show_stats == 'false' %}selected{% endif %}>Masquer</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Palette de couleurs :</label>
+                <select name="theme" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="indigo" {% if options.theme == 'indigo' %}selected{% endif %}>Indigo / Violet (Défaut)</option>
+                    <option value="emerald" {% if options.theme == 'emerald' %}selected{% endif %}>Émeraude / Vert</option>
+                    <option value="amber" {% if options.theme == 'amber' %}selected{% endif %}>Ambre / Orange</option>
+                    <option value="slate" {% if options.theme == 'slate' %}selected{% endif %}>Ardoise / Minimaliste</option>
+                </select>
+            </div>
+
+            <!-- OPTIONS BOXPLOT -->
+            {% elif chart_id == 'boxplot' %}
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Orientation :</label>
+                <select name="orientation" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="horizontal" {% if options.orientation == 'horizontal' %}selected{% endif %}>Horizontale (Axe X)</option>
+                    <option value="vertical" {% if options.orientation == 'vertical' %}selected{% endif %}>Verticale (Axe Y)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Points individuels (Jitter) :</label>
+                <select name="show_points" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="true" {% if options.show_points == 'true' %}selected{% endif %}>Afficher chaque observation</option>
+                    <option value="false" {% if options.show_points == 'false' %}selected{% endif %}>Boîte seule</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Palette :</label>
+                <select name="theme" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="indigo" {% if options.theme == 'indigo' %}selected{% endif %}>Indigo</option>
+                    <option value="emerald" {% if options.theme == 'emerald' %}selected{% endif %}>Émeraude</option>
+                    <option value="amber" {% if options.theme == 'amber' %}selected{% endif %}>Ambre</option>
+                    <option value="slate" {% if options.theme == 'slate' %}selected{% endif %}>Ardoise</option>
+                </select>
+            </div>
+
+            <!-- OPTIONS SCATTER PLOT -->
+            {% elif chart_id == 'scatter' %}
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Mode d'affichage :</label>
+                <select name="mode" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="index" {% if options.mode == 'index' %}selected{% endif %}>Séquence (Index i vs Valeur x_i)</option>
+                    <option value="lag" {% if options.mode == 'lag' %}selected{% endif %}>Lag-Plot (x_t vs x_t+1)</option>
+                    <option value="sorted" {% if options.mode == 'sorted' %}selected{% endif %}>Rangs centiles triés (%)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Droite de régression :</label>
+                <select name="show_trend" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="true" {% if options.show_trend == 'true' %}selected{% endif %}>Afficher tendance linéaire (r)</option>
+                    <option value="false" {% if options.show_trend == 'false' %}selected{% endif %}>Masquer la tendance</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Bande d'écart-type (±1σ) :</label>
+                <select name="show_sigma" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="true" {% if options.show_sigma == 'true' %}selected{% endif %}>Afficher la bande ±1σ</option>
+                    <option value="false" {% if options.show_sigma == 'false' %}selected{% endif %}>Masquer</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Thème :</label>
+                <select name="theme" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="indigo" {% if options.theme == 'indigo' %}selected{% endif %}>Indigo</option>
+                    <option value="emerald" {% if options.theme == 'emerald' %}selected{% endif %}>Émeraude</option>
+                    <option value="amber" {% if options.theme == 'amber' %}selected{% endif %}>Ambre</option>
+                </select>
+            </div>
+
+            <!-- OPTIONS LINE CHART -->
+            {% elif chart_id == 'line' %}
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Style de courbe :</label>
+                <select name="style" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="line_markers" {% if options.style == 'line_markers' %}selected{% endif %}>Ligne & Marqueurs</option>
+                    <option value="line" {% if options.style == 'line' %}selected{% endif %}>Ligne continue seule</option>
+                    <option value="markers" {% if options.style == 'markers' %}selected{% endif %}>Points marqueurs seuls</option>
+                    <option value="steps" {% if options.style == 'steps' %}selected{% endif %}>En escaliers (Step)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Moyenne mobile :</label>
+                <select name="rolling" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="" {% if not options.rolling %}selected{% endif %}>Sans lissage mobile</option>
+                    <option value="2" {% if options.rolling == '2' %}selected{% endif %}>Moyenne mobile (fenêtre 2)</option>
+                    <option value="3" {% if options.rolling == '3' %}selected{% endif %}>Moyenne mobile (fenêtre 3)</option>
+                    <option value="5" {% if options.rolling == '5' %}selected{% endif %}>Moyenne mobile (fenêtre 5)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Remplissage d'aire :</label>
+                <select name="fill_area" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="true" {% if options.fill_area == 'true' %}selected{% endif %}>Remplir sous la courbe</option>
+                    <option value="false" {% if options.fill_area == 'false' %}selected{% endif %}>Ligne seule sans aire</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Ligne de moyenne x̄ :</label>
+                <select name="show_mean" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="true" {% if options.show_mean == 'true' %}selected{% endif %}>Afficher repère x̄</option>
+                    <option value="false" {% if options.show_mean == 'false' %}selected{% endif %}>Masquer repère</option>
+                </select>
+            </div>
+
+            <!-- OPTIONS BAR CHART -->
+            {% elif chart_id == 'bars' %}
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Type de fréquences :</label>
+                <select name="freq_type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="absolute" {% if options.freq_type == 'absolute' %}selected{% endif %}>Effectifs absolus</option>
+                    <option value="relative" {% if options.freq_type == 'relative' %}selected{% endif %}>Pourcentages relatifs (%)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Tri des modalités :</label>
+                <select name="sort_by" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="value" {% if options.sort_by == 'value' %}selected{% endif %}>Ordre croissant des valeurs</option>
+                    <option value="freq" {% if options.sort_by == 'freq' %}selected{% endif %}>Ordre décroissant d'effectif (Pareto)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Mettre en valeur le Mode :</label>
+                <select name="highlight_mode" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="true" {% if options.highlight_mode == 'true' %}selected{% endif %}>Oui (Couleur contrastée)</option>
+                    <option value="false" {% if options.highlight_mode == 'false' %}selected{% endif %}>Non (Couleur uniforme)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Orientation :</label>
+                <select name="orientation" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="vertical" {% if options.orientation == 'vertical' %}selected{% endif %}>Barres verticales</option>
+                    <option value="horizontal" {% if options.orientation == 'horizontal' %}selected{% endif %}>Barres horizontales</option>
+                </select>
+            </div>
+
+            <!-- OPTIONS KDE -->
+            {% elif chart_id == 'kde' %}
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Lissage bande passante :</label>
+                <select name="bandwidth" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="standard" {% if options.bandwidth == 'standard' %}selected{% endif %}>Standard (Scott/Silverman)</option>
+                    <option value="fine" {% if options.bandwidth == 'fine' %}selected{% endif %}>Fin (Détaillé, sensibilité locale)</option>
+                    <option value="smooth" {% if options.bandwidth == 'smooth' %}selected{% endif %}>Lisse (Grande tendance globale)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Loi Normale de référence :</label>
+                <select name="compare_normal" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="true" {% if options.compare_normal == 'true' %}selected{% endif %}>Superposer Gaussienne N(x̄, s²)</option>
+                    <option value="false" {% if options.compare_normal == 'false' %}selected{% endif %}>KDE seule</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Tapis d'observations (Rug) :</label>
+                <select name="show_rug" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="true" {% if options.show_rug == 'true' %}selected{% endif %}>Afficher les tirets réels (rug)</option>
+                    <option value="false" {% if options.show_rug == 'false' %}selected{% endif %}>Masquer</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Remplissage d'aire :</label>
+                <select name="fill" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="true" {% if options.fill == 'true' %}selected{% endif %}>Oui (Ombrage coloré)</option>
+                    <option value="false" {% if options.fill == 'false' %}selected{% endif %}>Ligne de contour seule</option>
+                </select>
+            </div>
+
+            <!-- OPTIONS HEATMAP -->
+            {% elif chart_id == 'heatmap' %}
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Nombre de retards (Lags) :</label>
+                <select name="lags" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="2" {% if options.lags == '2' %}selected{% endif %}>2 retards (Lag 1 & 2)</option>
+                    <option value="3" {% if options.lags == '3' %}selected{% endif %}>3 retards</option>
+                    <option value="4" {% if options.lags == '4' %}selected{% endif %}>4 retards (Défaut)</option>
+                    <option value="5" {% if options.lags == '5' %}selected{% endif %}>5 retards</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Palette de couleurs (Colormap) :</label>
+                <select name="cmap" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="coolwarm" {% if options.cmap == 'coolwarm' %}selected{% endif %}>Coolwarm (Bleu &rarr; Rouge)</option>
+                    <option value="vlag" {% if options.cmap == 'vlag' %}selected{% endif %}>Vlag (Divergent doux)</option>
+                    <option value="viridis" {% if options.cmap == 'viridis' %}selected{% endif %}>Viridis (Perceptuel)</option>
+                    <option value="rocket" {% if options.cmap == 'rocket' %}selected{% endif %}>Rocket (Chaud sombre)</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Valeurs chiffrées de Pearson :</label>
+                <select name="annot" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-800">
+                    <option value="true" {% if options.annot == 'true' %}selected{% endif %}>Afficher les coefficients r</option>
+                    <option value="false" {% if options.annot == 'false' %}selected{% endif %}>Couleurs seules sans texte</option>
+                </select>
+            </div>
+            {% endif %}
+
+            <!-- BOUTON D'APPLICATION -->
+            <div class="sm:col-span-2 md:col-span-1">
+                <button type="submit" class="w-full py-2 px-4 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-xs shadow-xs transition flex items-center justify-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    Actualiser le graphique
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ZONE PRINCIPALE DU GRAPHIQUE ACTIF -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-5">
+        <div class="flex flex-wrap items-center justify-between pb-3 border-b border-slate-100 gap-3">
+            <div class="flex items-center gap-3">
+                <span class="text-3xl">{{ active_result.icon }}</span>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900">{{ active_result.title }}</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">{{ current_chart_meta.desc }}</p>
+                </div>
+            </div>
+
+            {% if active_result.success %}
+            <!-- Bouton Télécharger PNG avec tous les paramètres actuels -->
+            <a href="{% url 'stat_app:download_chart_png' chart_id %}?{% for k, v in options.items %}{{ k }}={{ v }}&{% endfor %}"
+               download="statlab_{{ chart_id }}.png"
+               class="inline-flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl transition shadow-xs">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Télécharger ce graphique en PNG
+            </a>
+            {% endif %}
+        </div>
+
+        {% if active_result.success %}
+        <!-- Affichage de l'image générée en haute résolution -->
+        <div class="bg-slate-50 rounded-2xl p-3 flex items-center justify-center border border-slate-100 shadow-inner">
+            <img src="{{ active_result.b64_image }}" alt="{{ active_result.title }}" class="max-w-full h-auto rounded-xl shadow-xs">
+        </div>
+
+        <!-- CARTE D'INTERPRÉTATION PÉDAGOGIQUE -->
+        {% if active_result.interpretation %}
+        <div class="p-5 bg-gradient-to-r from-indigo-50/60 via-purple-50/40 to-slate-50 rounded-2xl border border-indigo-100/80 text-xs text-slate-800 space-y-3">
+            <div class="flex items-center gap-2 font-bold text-slate-900 text-sm">
+                <span class="text-base text-brand-600">💡</span>
+                <span>{{ active_result.interpretation.title }}</span>
+            </div>
+            <ul class="space-y-2 pl-4 list-disc text-slate-700 leading-relaxed text-xs">
+                {% for point in active_result.interpretation.points %}
+                <li>{{ point|safe }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Message clair si les données sont insuffisantes ou incompatibles -->
+        <div class="bg-amber-50 border border-amber-200/90 rounded-2xl p-6 text-amber-900 text-xs space-y-3">
+            <div class="flex items-center gap-2 font-bold text-sm text-amber-800">
+                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <span>Données insuffisantes ou incompatibles pour ce graphique</span>
+            </div>
+            <p class="leading-relaxed">{{ active_result.error }}</p>
+            <div class="pt-2 flex items-center gap-2">
+                <button onclick="openDataModal()" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs shadow-xs transition">
+                    Ajouter des observations
+                </button>
+                <button onclick="loadPreset('cours')" class="px-3.5 py-1.5 bg-white border border-amber-300 hover:bg-amber-100 text-amber-800 font-semibold rounded-xl text-xs transition">
+                    Charger les 7 valeurs du cours
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

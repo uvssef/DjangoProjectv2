@@ -1,0 +1,458 @@
+{% extends 'stat_app/base.html' %}
+
+{% block title %}Dashboard & Données — Statistiques & Probabilités{% endblock %}
+{% block page_title %}Tableau de Bord & Gestion des Données{% endblock %}
+{% block page_subtitle %}Saisie des nombres, importation Excel et vue d'ensemble des données actives{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- ============================================================== -->
+    <!-- 1. STATS BANNER / QUICK METRICS                                -->
+    <!-- ============================================================== -->
+    {% if dataset_count > 0 and ct and var %}
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <!-- Effectif n -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-brand-300 transition">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Effectif total (n)</span>
+            <div class="mt-2 flex items-baseline justify-between">
+                <span class="text-2xl font-black text-slate-900 font-mono">{{ dataset_count }}</span>
+                <span class="text-[11px] text-slate-400">observations</span>
+            </div>
+            <span class="text-[11px] text-slate-400 mt-1">Source : {{ dataset_source|truncatechars:18 }}</span>
+        </div>
+
+        <!-- Moyenne x̄ -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-brand-300 transition">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Moyenne ($\bar{x}$)</span>
+            <div class="mt-2 flex items-baseline justify-between">
+                <span class="text-2xl font-black text-brand-600 font-mono">{{ ct.mean.value_formatted }}</span>
+                <span class="text-[11px] text-brand-400">centre de gravité</span>
+            </div>
+            <a href="{% url 'stat_app:central' %}" class="text-[11px] text-brand-600 hover:underline mt-1">Voir formule & étapes &rarr;</a>
+        </div>
+
+        <!-- Médiane Me -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-emerald-300 transition">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Médiane ($Me$)</span>
+            <div class="mt-2 flex items-baseline justify-between">
+                <span class="text-2xl font-black text-emerald-600 font-mono">{{ ct.median.value_formatted }}</span>
+                <span class="text-[11px] text-emerald-500">50% au-dessus/dessous</span>
+            </div>
+            <span class="text-[11px] text-slate-400 mt-1">Robuste aux outliers</span>
+        </div>
+
+        <!-- Écart-type s -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-indigo-300 transition">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Écart-type ($s$)</span>
+            <div class="mt-2 flex items-baseline justify-between">
+                <span class="text-2xl font-black text-indigo-600 font-mono">{{ var.std_dev.val_sample_formatted }}</span>
+                <span class="text-[11px] text-indigo-400">échantillon (n-1)</span>
+            </div>
+            <a href="{% url 'stat_app:variability' %}" class="text-[11px] text-indigo-600 hover:underline mt-1">Voir dispersion &rarr;</a>
+        </div>
+
+        <!-- Étendue E -->
+        <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col justify-between hover:border-amber-300 transition">
+            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Étendue ($E$)</span>
+            <div class="mt-2 flex items-baseline justify-between">
+                <span class="text-2xl font-black text-amber-600 font-mono">{{ var.range.value_formatted }}</span>
+                <span class="text-[11px] text-amber-500">max - min</span>
+            </div>
+            <span class="text-[11px] text-slate-400 mt-1">[{{ var.range.min_val }} ; {{ var.range.max_val }}]</span>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-amber-800 text-sm flex items-center justify-between">
+        <div class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <span>Aucune donnée active actuellement. Veuillez saisir des nombres ou charger un jeu d'exemple ci-dessous.</span>
+        </div>
+        <button onclick="loadPreset('cours')" class="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold transition">
+            Charger l'exemple de cours
+        </button>
+    </div>
+    {% endif %}
+
+    <!-- ============================================================== -->
+    <!-- 2. DATA MANAGEMENT (SAISIE MANUELLE & IMPORTATION EXCEL)       -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- CARD A : Saisie manuelle & Modification en direct -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-bold text-xs">A</span>
+                        <h3 class="font-bold text-slate-900 text-sm">Saisie Manuelle de Nombres</h3>
+                    </div>
+                    <span class="text-xs text-slate-400">Virgules, espaces ou retours à la ligne</span>
+                </div>
+
+                <div class="space-y-3">
+                    <textarea id="pageManualText" rows="3" class="w-full text-xs font-mono p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition"
+                              placeholder="12, 15, 18, 20, 15, 25, 30, 15, 40">{% for v in dataset %}{{ v|floatformat:2 }}{% if not forloop.last %}, {% endif %}{% endfor %}</textarea>
+
+                    <div class="flex items-center justify-between">
+                        <button onclick="submitPageManualData()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl shadow-xs transition flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            Mettre à jour la série
+                        </button>
+                        <button onclick="clearDataset()" class="text-xs text-rose-600 hover:text-rose-800 font-medium">
+                            Effacer tout
+                        </button>
+                    </div>
+
+                    <!-- Presets buttons -->
+                    <div class="pt-2 border-t border-slate-100">
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">Exemples types du cours :</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="loadPreset('cours')" class="text-[11px] px-2 py-1 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 rounded-lg text-slate-600 transition">Exemple cours (7)</button>
+                            <button onclick="loadPreset('notes')" class="text-[11px] px-2 py-1 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 rounded-lg text-slate-600 transition">Notes examen (15)</button>
+                            <button onclick="loadPreset('outliers')" class="text-[11px] px-2 py-1 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 rounded-lg text-slate-600 transition">Avec Outlier (10)</button>
+                            <button onclick="loadPreset('bimodale')" class="text-[11px] px-2 py-1 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 rounded-lg text-slate-600 transition">Bimodale (12)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste interactive des valeurs actuelles (édition / suppression) -->
+            <div class="mt-4 pt-4 border-t border-slate-100">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-semibold text-slate-700">Valeurs individuelles actives ({{ dataset_count }}) :</span>
+                    <!-- Add individual value inline -->
+                    <div class="flex items-center gap-1">
+                        <input type="text" id="addSingleInput" placeholder="Nouv. valeur" class="w-24 text-xs px-2 py-1 border border-slate-200 rounded-lg outline-none font-mono">
+                        <button onclick="addSingleValue()" class="p-1 bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition" title="Ajouter">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="max-h-36 overflow-y-auto p-2 bg-slate-50/70 rounded-xl border border-slate-200/60 flex flex-wrap gap-1.5">
+                    {% for val in dataset %}
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-mono text-slate-800 shadow-2xs group">
+                        <span>{{ val|floatformat:2 }}</span>
+                        <button onclick="deleteSingleValue({{ forloop.counter0 }})" title="Supprimer" class="text-slate-300 hover:text-rose-600 transition ml-0.5">
+                            &times;
+                        </button>
+                    </span>
+                    {% empty %}
+                    <span class="text-xs text-slate-400 italic">Aucune valeur. Saisissez des nombres ci-dessus.</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD B : Importation Fichier Excel / CSV -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xs">B</span>
+                        <h3 class="font-bold text-slate-900 text-sm">Importation de Fichier Excel / CSV</h3>
+                    </div>
+                    <span class="text-xs text-slate-400">.xlsx, .xls, .csv</span>
+                </div>
+
+                <!-- Dropzone -->
+                <div class="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:border-emerald-400 transition bg-slate-50/50">
+                    <svg class="w-9 h-9 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p class="text-xs text-slate-700 font-semibold mb-0.5">Glissez un fichier ou sélectionnez-le</p>
+                    <p class="text-[11px] text-slate-400 mb-2">Lecture automatique des colonnes numériques</p>
+                    <input type="file" id="pageExcelFileInput" accept=".xlsx,.xls,.csv" onchange="handlePageExcelSelect(this)" class="hidden">
+                    <button onclick="document.getElementById('pageExcelFileInput').click()" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-xs transition">
+                        Choisir un fichier
+                    </button>
+                </div>
+
+                <!-- Preview Area on Page -->
+                <div id="pageExcelPreview" class="hidden mt-3 space-y-3">
+                    <div class="p-3 bg-emerald-50/70 rounded-xl border border-emerald-100 flex items-center justify-between text-xs">
+                        <div>
+                            <span id="pageExcelFileName" class="font-bold text-slate-800">fichier.xlsx</span>
+                            <span id="pageExcelRowCount" class="text-slate-500 ml-1"></span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-medium text-slate-700">Colonne :</span>
+                            <select id="pageExcelColSelect" class="bg-white border border-slate-200 rounded-lg px-2 py-1 font-semibold text-slate-800 outline-none"></select>
+                        </div>
+                    </div>
+
+                    <button onclick="confirmPageExcelImport()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-xs transition">
+                        Valider et Charger cette colonne dans l'application
+                    </button>
+                </div>
+            </div>
+
+            <!-- Export reminder -->
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                <span>Exporter la série actuelle avec tous les calculs :</span>
+                <a href="{% url 'stat_app:export_excel' %}" class="inline-flex items-center gap-1 text-emerald-700 font-semibold hover:underline">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    Télécharger (.xlsx)
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 3. VISUALISATIONS GRAPHIQUES MATPLOTLIB                        -->
+    <!-- ============================================================== -->
+    {% if chart_ct and chart_box %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Graphique 1 : Tendances Centrales -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm">Visualisation : Distribution & Tendances Centrales</h3>
+                    <p class="text-xs text-slate-500">Histogramme, courbe de densité KDE et repères verticaux</p>
+                </div>
+                <a href="{% url 'stat_app:central' %}" class="text-xs text-brand-600 hover:underline font-medium">Détails &rarr;</a>
+            </div>
+            <div class="bg-slate-50 rounded-xl overflow-hidden flex items-center justify-center p-2 border border-slate-100">
+                <img src="{{ chart_ct }}" alt="Distribution et Tendances Centrales" class="max-w-full h-auto rounded-lg">
+            </div>
+        </div>
+
+        <!-- Graphique 2 : Boîte à moustaches (Boxplot) -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="font-bold text-slate-900 text-sm">Visualisation : Boîte à Moustaches (Boxplot)</h3>
+                    <p class="text-xs text-slate-500">Quartiles (Q1, Médiane, Q3), moustaches et détection des valeurs aberrantes</p>
+                </div>
+                <a href="{% url 'stat_app:variability' %}" class="text-xs text-indigo-600 hover:underline font-medium">Détails &rarr;</a>
+            </div>
+            <div class="bg-slate-50 rounded-xl overflow-hidden flex items-center justify-center p-2 border border-slate-100">
+                <img src="{{ chart_box }}" alt="Boxplot des données" class="max-w-full h-auto rounded-lg">
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ============================================================== -->
+    <!-- 4. NAVIGATION VERS LES GRANDS MODULES DU COURS                 -->
+    <!-- ============================================================== -->
+    <div class="pt-4">
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">Explorer les Modules Mathématiques & Graphiques</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Visualisation des données -->
+            <a href="{% url 'stat_app:visualizations' %}" class="bg-gradient-to-br from-white to-brand-50/40 p-5 rounded-2xl border-2 border-brand-200/90 shadow-xs hover:shadow-md hover:border-brand-500 transition group flex flex-col justify-between">
+                <div>
+                    <div class="w-8 h-8 rounded-lg bg-brand-600 text-white flex items-center justify-center mb-3 group-hover:scale-105 transition shadow-xs">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" /></svg>
+                    </div>
+                    <div class="flex items-center justify-between mb-1">
+                        <h4 class="font-bold text-slate-900 text-sm group-hover:text-brand-600 transition">Visualisation des données</h4>
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-brand-100 text-brand-700">5 Graphiques</span>
+                    </div>
+                    <p class="text-xs text-slate-500">Histogramme, Barres, Boxplot, Courbe de distribution KDE et Diagramme circulaire avec téléchargement PNG.</p>
+                </div>
+                <span class="text-xs text-brand-600 font-semibold mt-4 flex items-center gap-1">Explorer les 5 visualisations &rarr;</span>
+            </a>
+
+            <!-- Tendances centrales -->
+            <a href="{% url 'stat_app:central' %}" class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-brand-400 transition group flex flex-col justify-between">
+                <div>
+                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                        <span class="font-bold text-sm">2</span>
+                    </div>
+                    <h4 class="font-bold text-slate-900 text-sm mb-1 group-hover:text-brand-600 transition">Tendances centrales</h4>
+                    <p class="text-xs text-slate-500">Moyenne ($\bar{x}$), Médiane ($Me$) et Mode ($Mo$) avec applications réelles pas à pas.</p>
+                </div>
+                <span class="text-xs text-brand-600 font-semibold mt-4 flex items-center gap-1">Consulter les résultats &rarr;</span>
+            </a>
+
+            <!-- Tendances de variabilité -->
+            <a href="{% url 'stat_app:variability' %}" class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-brand-400 transition group flex flex-col justify-between">
+                <div>
+                    <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                        <span class="font-bold text-sm">3</span>
+                    </div>
+                    <h4 class="font-bold text-slate-900 text-sm mb-1 group-hover:text-brand-600 transition">Tendances de variabilité</h4>
+                    <p class="text-xs text-slate-500">Étendue, Variance et Écart-type avec distinction rigoureuse Échantillon ($n-1$) vs Population ($N$).</p>
+                </div>
+                <span class="text-xs text-brand-600 font-semibold mt-4 flex items-center gap-1">Consulter la variabilité &rarr;</span>
+            </a>
+
+            <!-- Analyse combinatoire -->
+            <a href="{% url 'stat_app:combinatorics' %}" class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-brand-400 transition group flex flex-col justify-between">
+                <div>
+                    <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                        <span class="font-bold text-sm">4</span>
+                    </div>
+                    <h4 class="font-bold text-slate-900 text-sm mb-1 group-hover:text-brand-600 transition">Analyse combinatoire</h4>
+                    <p class="text-xs text-slate-500">Énumération ($n^k$), Arrangements ($A_n^k$) et Combinaisons ($C_n^k$) avec calculs interactifs.</p>
+                </div>
+                <span class="text-xs text-brand-600 font-semibold mt-4 flex items-center gap-1">Calculer les dénombrements &rarr;</span>
+            </a>
+
+            <!-- Probabilité discrète -->
+            <a href="{% url 'stat_app:discrete' %}" class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-brand-400 transition group flex flex-col justify-between">
+                <div>
+                    <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                        <span class="font-bold text-sm">5</span>
+                    </div>
+                    <h4 class="font-bold text-slate-900 text-sm mb-1 group-hover:text-brand-600 transition">Probabilité discrète</h4>
+                    <p class="text-xs text-slate-500">Univers $\Omega$, Cardinal et cas équiprobables. Simulation interactive de l'urne du cours avec boules colorées.</p>
+                </div>
+                <span class="text-xs text-brand-600 font-semibold mt-4 flex items-center gap-1">Simuler l'urne &rarr;</span>
+            </a>
+
+            <!-- Probabilité conditionnelle -->
+            <a href="{% url 'stat_app:conditional' %}" class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-brand-400 transition group flex flex-col justify-between">
+                <div>
+                    <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                        <span class="font-bold text-sm">6</span>
+                    </div>
+                    <h4 class="font-bold text-slate-900 text-sm mb-1 group-hover:text-brand-600 transition">Probabilité conditionnelle</h4>
+                    <p class="text-xs text-slate-500">Théorème de Bayes, probabilité totale, arbres pondérés et diagrammes de Venn à 6 régions.</p>
+                </div>
+                <span class="text-xs text-brand-600 font-semibold mt-4 flex items-center gap-1">Calculer Bayes & Venn &rarr;</span>
+            </a>
+
+            <!-- Lois de probabilité -->
+            <a href="{% url 'stat_app:distributions' %}" class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md hover:border-brand-400 transition group flex flex-col justify-between">
+                <div>
+                    <div class="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center mb-3 group-hover:scale-105 transition">
+                        <span class="font-bold text-sm">7</span>
+                    </div>
+                    <h4 class="font-bold text-slate-900 text-sm mb-1 group-hover:text-brand-600 transition">Lois de probabilité</h4>
+                    <p class="text-xs text-slate-500">8 lois discrètes et continues (Binomiale, Poisson, Normale Gauss, Z-score) avec aires sous les courbes.</p>
+                </div>
+                <span class="text-xs text-brand-600 font-semibold mt-4 flex items-center gap-1">Explorer les lois &rarr;</span>
+            </a>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function submitPageManualData() {
+        const text = document.getElementById('pageManualText').value;
+        const formData = new FormData();
+        formData.append('data_text', text);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch("{% url 'stat_app:api_manual' %}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                setTimeout(() => window.location.reload(), 400);
+            } else {
+                showToast(data.error, 'error');
+            }
+        });
+    }
+
+    function addSingleValue() {
+        const inp = document.getElementById('addSingleInput');
+        const val = inp.value.trim();
+        if (!val) return;
+        const formData = new FormData();
+        formData.append('value', val);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch("{% url 'stat_app:api_add' %}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast("Valeur ajoutée !", 'success');
+                setTimeout(() => window.location.reload(), 300);
+            } else {
+                showToast(data.error, 'error');
+            }
+        });
+    }
+
+    function deleteSingleValue(idx) {
+        const formData = new FormData();
+        formData.append('index', idx);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch("{% url 'stat_app:api_delete' %}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast("Valeur supprimée", 'success');
+                setTimeout(() => window.location.reload(), 300);
+            }
+        });
+    }
+
+    let pageSelectedExcel = null;
+
+    function handlePageExcelSelect(input) {
+        if (!input.files || input.files.length === 0) return;
+        pageSelectedExcel = input.files[0];
+
+        const formData = new FormData();
+        formData.append('file', pageSelectedExcel);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch("{% url 'stat_app:api_excel_preview' %}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                document.getElementById('pageExcelFileName').innerText = res.filename;
+                document.getElementById('pageExcelRowCount').innerText = `(${res.total_rows} lignes)`;
+                
+                const select = document.getElementById('pageExcelColSelect');
+                select.innerHTML = '';
+                res.numeric_columns.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    select.appendChild(opt);
+                });
+
+                document.getElementById('pageExcelPreview').classList.remove('hidden');
+            } else {
+                showToast(res.error, 'error');
+            }
+        });
+    }
+
+    function confirmPageExcelImport() {
+        if (!pageSelectedExcel) return;
+        const col = document.getElementById('pageExcelColSelect').value;
+        const formData = new FormData();
+        formData.append('file', pageSelectedExcel);
+        formData.append('column_name', col);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch("{% url 'stat_app:api_excel_confirm' %}", {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                showToast(res.message, 'success');
+                setTimeout(() => window.location.reload(), 400);
+            } else {
+                showToast(res.error, 'error');
+            }
+        });
+    }
+</script>
+{% endblock %}

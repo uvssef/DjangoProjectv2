@@ -1,0 +1,211 @@
+{% extends 'stat_app/base.html' %}
+
+{% block title %}Probabilité Discrète & Simulation d'Urne — Statistiques & Probabilités{% endblock %}
+{% block page_title %}5. Probabilité Discrète{% endblock %}
+{% block page_subtitle %}Univers des possibles Ω, Cardinal, Cas équiprobables et Simulation interactive d'Urne{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- ============================================================== -->
+    <!-- 1. NOTIONS FONDAMENTALES DU COURS (PR. CHADI)                 -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+            <span class="text-[11px] font-bold text-brand-600 uppercase tracking-wider block mb-1">Univers des Possibles</span>
+            <span class="text-base font-bold text-slate-900 block font-serif">$\Omega$</span>
+            <p class="text-xs text-slate-500 mt-1">Ensemble de tous les résultats possibles qu'une expérience aléatoire peut produire.</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+            <span class="text-[11px] font-bold text-brand-600 uppercase tracking-wider block mb-1">Cardinal de l'ensemble</span>
+            <span class="text-base font-bold text-slate-900 block font-mono">$\text{Card}(\Omega) = {{ urn.omega_card }}$</span>
+            <p class="text-xs text-slate-500 mt-1">Nombre total d'issues élémentaires distinctes possibles.</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+            <span class="text-[11px] font-bold text-brand-600 uppercase tracking-wider block mb-1">Cas Équiprobable</span>
+            <span class="text-xs font-bold text-slate-900 block font-serif">$P(A) = \frac{\text{Card}(A)}{\text{Card}(\Omega)}$</span>
+            <p class="text-xs text-slate-500 mt-1">Rapport : Nombre de cas favorables sur Nombre de cas possibles.</p>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+            <span class="text-[11px] font-bold text-brand-600 uppercase tracking-wider block mb-1">Événement Complémentaire</span>
+            <span class="text-xs font-bold text-slate-900 block font-serif">$P(A') = 1 - P(A)$</span>
+            <p class="text-xs text-slate-500 mt-1">La probabilité que l'événement A ne se réalise pas.</p>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 2. SIMULATEUR INTERACTIF D'URNE (EXEMPLE DU COURS)             -->
+    <!-- ============================================================== -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+            <div>
+                <h3 class="font-bold text-slate-900 text-sm">Exemple Interactif : L'Urne aux Boules Colorées</h3>
+                <p class="text-xs text-slate-500">Modifiez le nombre de boules de chaque couleur pour recalculer immédiatement les probabilités.</p>
+            </div>
+            <a href="?rouge=5&bleue=3&verte=0&jaune=0" class="text-xs px-3 py-1.5 bg-brand-50 hover:bg-brand-100 text-brand-700 font-semibold rounded-xl transition">
+                Exemple officiel cours (5 rouges, 3 bleues)
+            </a>
+        </div>
+
+        <!-- Formulaire de saisie des boules -->
+        <form method="GET" action="{% url 'stat_app:discrete' %}" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4 items-end">
+            <!-- Boules Rouges -->
+            <div class="p-3 bg-rose-50/60 rounded-xl border border-rose-100">
+                <label for="inputRouge" class="block text-xs font-bold text-rose-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-rose-500"></span> Boules Rouges
+                </label>
+                <input type="number" id="inputRouge" name="rouge" value="{{ balls.Rouge }}" min="0" max="100"
+                       class="w-full text-sm font-mono font-bold p-2 border border-rose-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-rose-400">
+            </div>
+
+            <!-- Boules Bleues -->
+            <div class="p-3 bg-blue-50/60 rounded-xl border border-blue-100">
+                <label for="inputBleue" class="block text-xs font-bold text-blue-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-blue-500"></span> Boules Bleues
+                </label>
+                <input type="number" id="inputBleue" name="bleue" value="{{ balls.Bleue }}" min="0" max="100"
+                       class="w-full text-sm font-mono font-bold p-2 border border-blue-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-blue-400">
+            </div>
+
+            <!-- Boules Vertes -->
+            <div class="p-3 bg-emerald-50/60 rounded-xl border border-emerald-100">
+                <label for="inputVerte" class="block text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500"></span> Boules Vertes
+                </label>
+                <input type="number" id="inputVerte" name="verte" value="{{ balls.Verte }}" min="0" max="100"
+                       class="w-full text-sm font-mono font-bold p-2 border border-emerald-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-emerald-400">
+            </div>
+
+            <!-- Boules Jaunes -->
+            <div class="p-3 bg-amber-50/60 rounded-xl border border-amber-100">
+                <label for="inputJaune" class="block text-xs font-bold text-amber-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                    <span class="w-3 h-3 rounded-full bg-amber-500"></span> Boules Jaunes
+                </label>
+                <input type="number" id="inputJaune" name="jaune" value="{{ balls.Jaune }}" min="0" max="100"
+                       class="w-full text-sm font-mono font-bold p-2 border border-amber-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-amber-400">
+            </div>
+
+            <!-- Bouton Calculer -->
+            <div class="col-span-2 sm:col-span-4 lg:col-span-1">
+                <button type="submit" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Actualiser
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 3. RÉSULTATS DÉTAILLÉS PAR COULEUR ET FORMULES                 -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Tableau des Probabilités Élémentaires -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+            <div>
+                <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">Calcul des Probabilités par Événement</h4>
+                <div class="border border-slate-200 rounded-xl overflow-hidden text-xs">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-100 text-slate-600 text-[11px]">
+                            <tr>
+                                <th class="p-3">Couleur</th>
+                                <th class="p-3">Effectif</th>
+                                <th class="p-3">Fraction</th>
+                                <th class="p-3">Probabilité P(A)</th>
+                                <th class="p-3">Complémentaire P(A')</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in urn.prob_list %}
+                            <tr class="border-t border-slate-100 hover:bg-slate-50">
+                                <td class="p-3 font-semibold flex items-center gap-2">
+                                    <span class="w-3 h-3 rounded-full" style="background-color: {{ p.hex }};"></span>
+                                    {{ p.color }}
+                                </td>
+                                <td class="p-3 font-mono">{{ p.count }}</td>
+                                <td class="p-3 font-mono font-bold">{{ p.fraction_simplified }}</td>
+                                <td class="p-3 font-mono text-brand-600 font-bold">{{ p.prob_percent }}</td>
+                                <td class="p-3 font-mono text-slate-500">{{ p.complementary.percent }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Formule détaillée pour le premier tirage -->
+                {% if urn.prob_list %}
+                <div class="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs">
+                    <span class="font-bold text-slate-800 block mb-1">Application détaillée de la formule :</span>
+                    <div class="text-center font-serif text-sm">
+                        $${{ urn.prob_list.0.formula_latex }}$$
+                    </div>
+                    <div class="text-center font-serif text-xs text-slate-600 mt-1">
+                        $${{ urn.prob_list.0.complementary.formula_latex }}$$
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-400">
+                L'urne contient au total {{ urn.total_balls }} boules. L'équiprobabilité garantit que chaque boule a une chance égale d'être tirée (1/{{ urn.total_balls }}).
+            </div>
+        </div>
+
+        <!-- 2 Tirages successifs : Avec Remise vs Sans Remise -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+            <div>
+                <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">Deux Tirages Successifs (Événements composés)</h4>
+                <p class="text-xs text-slate-500 mb-4">Comparaison fondamentale entre tirage avec remise (indépendant) et sans remise (dépendant) :</p>
+
+                <div class="space-y-4 text-xs">
+                    <!-- Avec Remise -->
+                    <div class="p-4 bg-brand-50/60 rounded-xl border border-brand-100 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-brand-800">1. Avec remise (Indépendance)</span>
+                            <span class="font-mono font-black text-brand-700 text-sm">{{ urn.two_draws.with_replacement.percent }}</span>
+                        </div>
+                        <p class="text-slate-600">{{ urn.two_draws.with_replacement.desc }} :</p>
+                        <div class="bg-white p-2 rounded-lg border border-brand-100 font-serif text-center overflow-x-auto">
+                            $${{ urn.two_draws.with_replacement.formula_latex }}$$
+                        </div>
+                    </div>
+
+                    <!-- Sans Remise -->
+                    <div class="p-4 bg-emerald-50/60 rounded-xl border border-emerald-100 space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-emerald-800">2. Sans remise (Probabilité conditionnelle)</span>
+                            <span class="font-mono font-black text-emerald-700 text-sm">{{ urn.two_draws.without_replacement.percent }}</span>
+                        </div>
+                        <p class="text-slate-600">{{ urn.two_draws.without_replacement.desc }} :</p>
+                        <div class="bg-white p-2 rounded-lg border border-emerald-100 font-serif text-center overflow-x-auto">
+                            $${{ urn.two_draws.without_replacement.formula_latex }}$$
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-400">
+                Sans remise, le cardinal total passe de {{ urn.total_balls }} à {{ urn.total_balls|add:"-1" }} pour le deuxième tirage, ce qui modifie la probabilité (probabilité conditionnelle).
+            </p>
+        </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 4. VISUALISATION GRAPHIQUE MATPLOTLIB                          -->
+    <!-- ============================================================== -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+        <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-1">Visualisation Graphique : Représentation de l'Urne & Diagramme en Bâtons</h4>
+        <p class="text-xs text-slate-500 mb-4">À gauche : contenu visuel de l'urne physique avec reflets. À droite : diagramme des hauteurs de probabilité équiprobables.</p>
+        <div class="bg-slate-50 rounded-xl p-2 flex items-center justify-center border border-slate-100">
+            {% if chart_urn %}
+            <img src="{{ chart_urn }}" alt="Représentation visuelle de l'Urne" class="max-w-full h-auto rounded-lg">
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

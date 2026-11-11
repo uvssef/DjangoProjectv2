@@ -1,0 +1,185 @@
+
+=== PAGE 1 ===
+Pr. CHADI 
+Chapitre 1 — Fondements mathématiques de l'IA 
+Statistiques et probabilité 
+SOMMAIRE 
+1. Mesures de base 
+2. Analyse combinatoire 
+3. Probabilité discrète 
+4. Probabilité conditionnelle 
+5. Lois de probabilité 
+     5.1 Lois discrètes 
+     5.2 Lois continues 
+  
+=== PAGE 2 ===
+Pr. CHADI 
+1. Les mesures de base 
+1.1 Tendances centrales 
+Mesure Formule Quand l'utiliser 
+Moyenne 
+ 
+ 
+Données quantitatives sans valeurs extrêmes ; synthèse 
+globale la plus courante. 
+Médiane Valeur centrale une fois les données triées Distribution asymétrique ou présence d'outliers (revenus, prix…) : plus robuste que la moyenne. 
+Mode Valeur la plus fréquente Données qualitatives / catégorielles, ou pour repérer une distribution multimodale. 
+1.2 Tendances de variabilité 
+Mesure Formule Quand l'utiliser 
+Étendue  Aperçu rapide de l'amplitude ; très sensible aux valeurs extrêmes. 
+Variance 
+ 
+ 
+Base des calculs statistiques (unité au carré, peu 
+interprétable seule). 
+Écart-type 
+  
+Mesure de dispersion la plus utilisée : mêmes unités 
+que les données d'origine. 
+2. Analyse combinatoire 
+Le choix de la formule dépend de deux questions : l'ordre compte-t-il ? et peut-on répéter un élément ? 
+Nom Ordre Répétition Formule Quand l'utiliser 
+Énumération Oui Non  Ordre important Répétition permise  
+Arrangement Oui Non 
+ 
+Ordre important 
+Répétition pas permise 
+Combinaison Non Non 
+ 
+Ordre pas important 
+Répétition pas permise 
+ 
+ 
+
+=== PAGE 3 ===
+Pr. CHADI 
+3. Probabilité discrète 
+Une probabilité mesure la vraisemblance qu'un événement se réalise ; c'est un nombre entre 0 (impossible) et 1 
+(certain). 
+Cas équiprobable :  
+Le cardinal Ω désigne l'univers des possibles : l'ensemble de tous les résultats qu'une expérience 
+aléatoire peut produire.  en est le nombre total d'éléments. 
+Exemple de l'urne : une urne contient 5 boules rouges et 3 boules bleues (8 boules au total). On tire une boule au 
+hasard. 
+{résultats possibles}, . Pour {"tirer une boule rouge"}, , donc 
+. 
+4. Probabilité conditionnelle 
+4.1 Diagrammes de Venn — lecture des régions 
+Chaque diagramme représente le même univers (rectangle) contenant deux événements A et B ; seule la région 
+colorée change de sens. 
+ 
+A 
+l'ensemble A 
+ 
+A ∪ B 
+tout ce qui est dans A ou dans B (ou les deux) 
+ 
+A ∩ B 
+ce que A et B ont en commun 
+ 
+A′ 
+le complémentaire de A 
+ 
+(A ∪ B)′ 
+en dehors des deux ensembles 
+ 
+(A ∩ B)′ 
+tout, sauf la partie commune 
+4.2 Arbre pondéré 
+Sur un arbre, on multiplie les probabilités le long des branches pour obtenir une intersection : 
+
+=== PAGE 4 ===
+Pr. CHADI 
+ 
+ 
+4.3 Théorème de Bayes — démonstration 
+On part du fait que l'intersection est commutative : , donc 
+. 
+Or, par définition de la probabilité conditionnelle : 
+ 
+ 
+Comme les deux expressions sont égales : 
+ 
+En isolant , on obtient le théorème de Bayes : 
+ 
+4.4 Théorème de probabilité totale 
+Si  forment une partition de  (événements incompatibles deux à deux, dont l'union est 
+), alors pour tout événement A : 
+
+=== PAGE 5 ===
+Pr. CHADI 
+ 
+Combiné à Bayes, ce théorème sert souvent de dénominateur : . 
+  
+
+=== PAGE 6 ===
+Pr. CHADI 
+5. Les lois de probabilité 
+Une loi de probabilité décrit comment les probabilités se répartissent sur l'ensemble des valeurs qu'une variable 
+aléatoire peut prendre. Pour chaque loi : sa formule, l'allure de sa courbe, et un cas d'usage. 
+5.1 Lois discrètes  — la probabilité est la hauteur d'une barre en un point précis 
+Loi Formule Forme Quand l'utiliser 
+Bernoulli  
+ 
+ 
+Une seule expérience à deux 
+issues (succès/échec). Ex. : 
+pile ou face d'une pièce de 
+monnaie. 
+Binomiale  
+ 
+Nombre de succès en 
+répétant n fois une 
+expérience de Bernoulli 
+indépendante. Ex. : nombre 
+de « pile » obtenus en 10 
+lancers. 
+Uniforme 
+discrète   
+Toutes les issues sont 
+équiprobables. Ex. : lancer 
+d'un dé à 6 faces (1/6 
+chacune). 
+Poisson 
+ 
+ 
+Fréquence d'un événement 
+rare sur un intervalle fixe (λ = 
+moyenne d'événements). Ex. : 
+nombre d'appels reçus par 
+jour. 
+5.2 Lois continues  — ici, la probabilité est l'aire sous la courbe, pas l'amplitude en un point 
+Loi Formule Forme Quand l'utiliser 
+Uniforme 
+continue  
+  
+Une valeur réelle a la même 
+densité sur tout un intervalle. 
+Ex. : heure d'arrivée d'un bus 
+« au hasard » entre 8h et 
+8h20. 
+Exponentielle  
+ 
+ 
+Temps d'attente entre deux 
+événements indépendants 
+(sans mémoire). Ex. : durée 
+avant le prochain appel, 
+durée de vie d'un 
+composant. 
+Normale 
+(gaussienne)   
+Phénomènes naturels, erreurs 
+de mesure, moyennes de 
+grands échantillons 
+(théorème central limite). Ex. 
+: tailles, notes d'examen. 
+
+=== PAGE 7 ===
+Pr. CHADI 
+La loi normale centrée réduite — le z-score 
+En posant , toute loi normale se ramène à la loi normale centrée réduite , ce qui 
+permet de comparer des mesures d'échelles différentes. La règle des 68-95-99 donne la proportion des valeurs 
+autour de la moyenne : 
+ 
+Chapitre 1 — Statistiques et probabilité · Fondements mathématiques de l'IA 

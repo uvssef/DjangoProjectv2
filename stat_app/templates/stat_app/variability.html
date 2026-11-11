@@ -1,0 +1,297 @@
+{% extends 'stat_app/base.html' %}
+
+{% block title %}Tendances de Variabilité — Statistiques & Probabilités{% endblock %}
+{% block page_title %}3. Tendances de Variabilité{% endblock %}
+{% block page_subtitle %}Étendue, Variance et Écart-type avec distinction rigoureuse Échantillon (n-1) vs Population (N){% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Active Dataset reminder badge -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                $s$
+            </div>
+            <div>
+                <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Données analysées</h3>
+                <p class="text-xs font-mono text-slate-800 font-medium">
+                    {% for v in dataset %}{{ v|floatformat:2 }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-xs px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg font-mono font-semibold">{{ dataset_count }} observations &bull; x̄ = {{ var.mean_formatted }}</span>
+            <button onclick="openDataModal()" class="text-xs px-3 py-1 bg-brand-50 hover:bg-brand-100 text-brand-700 font-medium rounded-lg transition">
+                Modifier les données
+            </button>
+        </div>
+    </div>
+
+    {% if var %}
+    <!-- ============================================================== -->
+    <!-- 3 CARTES PRINCIPALES : ÉTENDUE, VARIANCE, ÉCART-TYPE           -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- 1. ÉTENDUE -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between overflow-hidden">
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                        <span class="text-xs font-semibold text-amber-600 uppercase tracking-wider">Dispersion 1</span>
+                        <h4 class="text-base font-bold text-slate-900">{{ var.range.name }}</h4>
+                    </div>
+                    <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-sm">
+                        ${{ var.range.symbol }}$
+                    </div>
+                </div>
+
+                <div class="p-4 bg-amber-50/60 rounded-xl border border-amber-100 text-center">
+                    <span class="text-xs text-amber-800 font-medium block mb-1">Amplitude totale :</span>
+                    <span class="text-3xl font-black text-amber-700 font-mono tracking-tight">{{ var.range.value_formatted }}</span>
+                    <span class="text-xs text-slate-500 block mt-1">x_min = {{ var.range.min_val }} &bull; x_max = {{ var.range.max_val }}</span>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Formule mathématique :</h5>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60 text-center text-sm font-serif">
+                        $${{ var.range.formula_latex }}$$
+                    </div>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Application aux données réelles :</h5>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60 text-xs font-mono text-slate-800 text-center">
+                        $${{ var.range.formula_applied }}$$
+                    </div>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Étapes de calcul :</h5>
+                    <ul class="space-y-1.5 text-xs text-slate-600 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                        {% for step in var.range.steps %}
+                        <li class="flex items-start gap-1.5">
+                            <span class="text-amber-500 font-bold">•</span>
+                            <span>{{ step }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs text-slate-600 leading-relaxed">
+                    <span class="font-bold text-slate-800 block mb-1">Interprétation :</span>
+                    {{ var.range.explanation }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. VARIANCE (POPULATION VS ÉCHANTILLON) -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between overflow-hidden">
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                        <span class="text-xs font-semibold text-brand-600 uppercase tracking-wider">Dispersion 2</span>
+                        <h4 class="text-base font-bold text-slate-900">{{ var.variance.name }}</h4>
+                    </div>
+                    <div class="w-9 h-9 rounded-xl bg-brand-50 text-brand-700 flex items-center justify-center font-bold text-sm">
+                        $s^2$
+                    </div>
+                </div>
+
+                <!-- Distinction Échantillon vs Population -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="p-3 bg-brand-50/70 rounded-xl border border-brand-200 text-center">
+                        <span class="text-[11px] text-brand-800 font-bold block">Échantillon ($s^2$)</span>
+                        <span class="text-2xl font-black text-brand-700 font-mono tracking-tight">{{ var.variance.val_sample_formatted }}</span>
+                        <span class="text-[10px] text-brand-500 block">Diviseur (n - 1)</span>
+                    </div>
+                    <div class="p-3 bg-slate-100/70 rounded-xl border border-slate-200 text-center">
+                        <span class="text-[11px] text-slate-700 font-bold block">Population ($\sigma^2$)</span>
+                        <span class="text-2xl font-black text-slate-700 font-mono tracking-tight">{{ var.variance.val_pop_formatted }}</span>
+                        <span class="text-[10px] text-slate-500 block">Diviseur N</span>
+                    </div>
+                </div>
+
+                <!-- Formules Mathématiques -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Formules mathématiques :</h5>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-[11px] font-serif space-y-1">
+                        <div>Échantillon : $${{ var.variance.formula_sample_latex }}$$</div>
+                        <div>Population : $${{ var.variance.formula_pop_latex }}$$</div>
+                    </div>
+                </div>
+
+                <!-- Application aux données réelles -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Application aux données :</h5>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-xs font-mono text-slate-800 overflow-x-auto space-y-1">
+                        <div>$${{ var.variance.formula_sample_applied }}$$</div>
+                    </div>
+                    <span class="text-[11px] text-slate-400 block mt-1">Somme des Carrés des Écarts : SCE = {{ var.variance.sum_sq_dev_formatted }}</span>
+                </div>
+
+                <!-- Étapes Détaillées du calcul -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Étapes de calcul :</h5>
+                    <ul class="space-y-1 text-xs text-slate-600 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                        {% for step in var.variance.steps %}
+                        <li class="flex items-start gap-1.5">
+                            <span class="text-brand-500 font-bold">•</span>
+                            <span>{{ step }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs text-slate-600 leading-relaxed">
+                    <span class="font-bold text-slate-800 block mb-1">Correction de Bessel (n-1) :</span>
+                    {{ var.variance.explanation }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. ÉCART-TYPE -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between overflow-hidden">
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                        <span class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Dispersion 3</span>
+                        <h4 class="text-base font-bold text-slate-900">{{ var.std_dev.name }}</h4>
+                    </div>
+                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                        $s$
+                    </div>
+                </div>
+
+                <!-- Distinction Échantillon vs Population -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200 text-center">
+                        <span class="text-[11px] text-emerald-800 font-bold block">Échantillon ($s$)</span>
+                        <span class="text-2xl font-black text-emerald-700 font-mono tracking-tight">{{ var.std_dev.val_sample_formatted }}</span>
+                        <span class="text-[10px] text-emerald-600 block">Même unité que x_i</span>
+                    </div>
+                    <div class="p-3 bg-slate-100/70 rounded-xl border border-slate-200 text-center">
+                        <span class="text-[11px] text-slate-700 font-bold block">Population ($\sigma$)</span>
+                        <span class="text-2xl font-black text-slate-700 font-mono tracking-tight">{{ var.std_dev.val_pop_formatted }}</span>
+                        <span class="text-[10px] text-slate-500 block">$\sqrt{\sigma^2}$</span>
+                    </div>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Formules mathématiques :</h5>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-[11px] font-serif space-y-1">
+                        <div>Échantillon : $${{ var.std_dev.formula_sample_latex }}$$</div>
+                        <div>Population : $${{ var.std_dev.formula_pop_latex }}$$</div>
+                    </div>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Application aux données :</h5>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-xs font-mono text-slate-800 text-center">
+                        $${{ var.std_dev.formula_sample_applied }}$$
+                    </div>
+                </div>
+
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Étapes de calcul :</h5>
+                    <ul class="space-y-1 text-xs text-slate-600 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                        {% for step in var.std_dev.steps %}
+                        <li class="flex items-start gap-1.5">
+                            <span class="text-emerald-500 font-bold">•</span>
+                            <span>{{ step }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs text-slate-600 leading-relaxed">
+                    <span class="font-bold text-slate-800 block mb-1">Importance de l'écart-type :</span>
+                    {{ var.std_dev.explanation }}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TABLEAU DES ÉCARTS À LA MOYENNE & COMPLÉMENTS                  -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Tableau détaillé des écarts -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+            <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">Tableau des Écarts $(x_i - \bar{x})$</h4>
+            <div class="border border-slate-200 rounded-xl overflow-hidden text-xs max-h-60 overflow-y-auto">
+                <table class="w-full text-left font-mono">
+                    <thead class="bg-slate-100 text-slate-600 text-[11px]">
+                        <tr>
+                            <th class="p-2">i</th>
+                            <th class="p-2">x_i</th>
+                            <th class="p-2">(x_i - x̄)</th>
+                            <th class="p-2">(x_i - x̄)²</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in var.variance.dev_table %}
+                        <tr class="border-t border-slate-100 hover:bg-slate-50">
+                            <td class="p-2 text-slate-400">{{ row.i }}</td>
+                            <td class="p-2 font-bold">{{ row.xi }}</td>
+                            <td class="p-2 text-slate-600">{{ row.diff }}</td>
+                            <td class="p-2 text-brand-600 font-semibold">{{ row.sq }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if var.variance.has_more_rows %}
+            <p class="text-[11px] text-slate-400 mt-2 italic text-center">Affichage des premières observations pour concision.</p>
+            {% endif %}
+
+            <!-- Quartiles bonus card -->
+            <div class="mt-4 pt-3 border-t border-slate-100 space-y-2 text-xs">
+                <span class="font-bold text-slate-800 uppercase tracking-wider block text-[11px]">Indicateurs Complémentaires :</span>
+                <div class="flex justify-between py-1 border-b border-slate-100">
+                    <span class="text-slate-500">Quartiles (Q1 / Q3) :</span>
+                    <span class="font-mono font-semibold text-slate-800">{{ var.quartiles.q1 }} / {{ var.quartiles.q3 }}</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-slate-100">
+                    <span class="text-slate-500">Écart interquartile (IQR) :</span>
+                    <span class="font-mono font-bold text-emerald-600">{{ var.quartiles.iqr }}</span>
+                </div>
+                <div class="flex justify-between py-1">
+                    <span class="text-slate-500">Coefficient de variation (CV) :</span>
+                    <span class="font-mono font-bold text-indigo-600">{{ var.quartiles.cv_percent }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2 Graphiques Matplotlib : Dispersion + Boxplot -->
+        <div class="lg:col-span-2 space-y-6">
+            <!-- Graphique Dispersion -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+                <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">Graphique 1 : Écarts et Bandes d'Écart-Type (±1σ, ±2σ)</h4>
+                <div class="bg-slate-50 rounded-xl p-2 flex items-center justify-center border border-slate-100">
+                    {% if chart_var %}
+                    <img src="{{ chart_var }}" alt="Graphique des écarts à la moyenne" class="max-w-full h-auto rounded-lg">
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Graphique Boxplot -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+                <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">Graphique 2 : Boîte à Moustaches (Boxplot) & Quartiles</h4>
+                <div class="bg-slate-50 rounded-xl p-2 flex items-center justify-center border border-slate-100">
+                    {% if chart_box %}
+                    <img src="{{ chart_box }}" alt="Boxplot" class="max-w-full h-auto rounded-lg">
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+{% endblock %}

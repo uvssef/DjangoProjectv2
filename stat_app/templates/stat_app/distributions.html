@@ -1,0 +1,415 @@
+{% extends 'stat_app/base.html' %}
+
+{% block title %}Lois de Probabilité — Statistiques & Probabilités{% endblock %}
+{% block page_title %}7. Lois de Probabilité{% endblock %}
+{% block page_subtitle %}Modèles stochastiques fondamentaux : 4 Lois Discrètes & 4 Lois Continues{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- ============================================================== -->
+    <!-- 1. NAVIGATION DES LOIS DE PROBABILITÉ (2 GROUPES DU COURS)     -->
+    <!-- ============================================================== -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+        <!-- Groupe 1 : Lois Discrètes -->
+        <div>
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    5.1 Lois Discrètes (la probabilité est la hauteur d'un bâton en un point précis) :
+                </span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <a href="?law=bernoulli&p=0.6"
+                   class="px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center gap-2 {% if current_law_id == 'bernoulli' %}bg-brand-600 text-white font-bold shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    <span>Loi de Bernoulli</span>
+                    <span class="text-[11px] opacity-80">$\mathcal{B}(p)$</span>
+                </a>
+                <a href="?law=binomial&n=10&p=0.5&k=5"
+                   class="px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center gap-2 {% if current_law_id == 'binomial' %}bg-brand-600 text-white font-bold shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    <span>Loi Binomiale</span>
+                    <span class="text-[11px] opacity-80">$\mathcal{B}(n, p)$</span>
+                </a>
+                <a href="?law=uniform_discrete&a=1&b=6&k=3"
+                   class="px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center gap-2 {% if current_law_id == 'uniform_discrete' %}bg-brand-600 text-white font-bold shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    <span>Loi Uniforme discrète</span>
+                    <span class="text-[11px] opacity-80">$\mathcal{U}\{a, b\}$</span>
+                </a>
+                <a href="?law=poisson&lambda=4.0&k=3"
+                   class="px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center gap-2 {% if current_law_id == 'poisson' %}bg-brand-600 text-white font-bold shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    <span>Loi de Poisson</span>
+                    <span class="text-[11px] opacity-80">$\mathcal{P}(\lambda)$</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Groupe 2 : Lois Continues -->
+        <div class="pt-3 border-t border-slate-100">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <span class="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    5.2 Lois Continues (la probabilité est l'aire sous la courbe, pas l'amplitude en un point) :
+                </span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <a href="?law=uniform_continuous&a=0&b=10&x1=2&x2=6"
+                   class="px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center gap-2 {% if current_law_id == 'uniform_continuous' %}bg-emerald-600 text-white font-bold shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    <span>Loi Uniforme continue</span>
+                    <span class="text-[11px] opacity-80">$\mathcal{U}[a, b]$</span>
+                </a>
+                <a href="?law=exponential&lambda=0.5&x=2.0"
+                   class="px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center gap-2 {% if current_law_id == 'exponential' %}bg-emerald-600 text-white font-bold shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    <span>Loi Exponentielle</span>
+                    <span class="text-[11px] opacity-80">$\mathcal{E}(\lambda)$</span>
+                </a>
+                <a href="?law=normal&mu=100&sigma=15&x=115&range_x1=85&range_x2=115"
+                   class="px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center gap-2 {% if current_law_id == 'normal' %}bg-emerald-600 text-white font-bold shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    <span>Loi Normale (Gauss)</span>
+                    <span class="text-[11px] opacity-80">$\mathcal{N}(\mu, \sigma^2)$</span>
+                </a>
+                <a href="?law=standard_normal&z=1.96"
+                   class="px-3.5 py-2 rounded-xl text-xs font-medium transition flex items-center gap-2 {% if current_law_id == 'standard_normal' %}bg-emerald-600 text-white font-bold shadow-xs{% else %}bg-slate-100 text-slate-700 hover:bg-slate-200{% endif %}">
+                    <span>Normale centrée réduite (Z-score)</span>
+                    <span class="text-[11px] opacity-80">$\mathcal{N}(0, 1)$</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 2. FORMULAIRE INTERACTIF DES PARAMÈTRES                        -->
+    <!-- ============================================================== -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+        <form method="GET" action="{% url 'stat_app:distributions' %}" class="space-y-4">
+            <input type="hidden" name="law" value="{{ current_law_id }}">
+
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Paramétrage interactif pour :</span>
+                    <span class="text-sm font-bold text-slate-900">{{ law.name }} (${{ law.symbol }}$)</span>
+                </div>
+                <button type="submit" class="px-4 py-1.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                    Recalculer & Mettre à jour le graphique
+                </button>
+            </div>
+
+            <!-- Parameters inputs depending on the active distribution -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                {% if current_law_id == 'bernoulli' %}
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Probabilité de succès (p) :</label>
+                    <input type="number" name="p" value="{{ law.params.p }}" min="0" max="1" step="0.05" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                {% elif current_law_id == 'binomial' %}
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre d'essais (n) :</label>
+                    <input type="number" name="n" value="{{ law.params.n }}" min="1" max="100" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Probabilité unitaire (p) :</label>
+                    <input type="number" name="p" value="{{ law.params.p }}" min="0" max="1" step="0.05" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Succès ciblés (k) :</label>
+                    <input type="number" name="k" value="{{ law.params.k }}" min="0" max="{{ law.params.n }}" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                {% elif current_law_id == 'uniform_discrete' %}
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Borne min (a) :</label>
+                    <input type="number" name="a" value="{{ law.params.a }}" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Borne max (b) :</label>
+                    <input type="number" name="b" value="{{ law.params.b }}" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Valeur ciblée (k) :</label>
+                    <input type="number" name="k" value="{{ law.params.k }}" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                {% elif current_law_id == 'poisson' %}
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Taux moyen ($\lambda$) :</label>
+                    <input type="number" name="lambda" value="{{ law.params.lambda }}" min="0.1" max="50" step="0.5" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Nombre d'événements (k) :</label>
+                    <input type="number" name="k" value="{{ law.params.k }}" min="0" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                {% elif current_law_id == 'uniform_continuous' %}
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Borne inférieure (a) :</label>
+                    <input type="number" name="a" value="{{ law.params.a }}" step="0.5" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Borne supérieure (b) :</label>
+                    <input type="number" name="b" value="{{ law.params.b }}" step="0.5" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Intervalle calculé : x1</label>
+                    <input type="number" name="x1" value="{{ law.params.x1 }}" step="0.5" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Intervalle calculé : x2</label>
+                    <input type="number" name="x2" value="{{ law.params.x2 }}" step="0.5" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                {% elif current_law_id == 'exponential' %}
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Paramètre ($\lambda$) :</label>
+                    <input type="number" name="lambda" value="{{ law.params.lambda }}" min="0.01" max="10" step="0.1" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Seuil de temps (x) :</label>
+                    <input type="number" name="x" value="{{ law.params.x }}" min="0" step="0.5" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                {% elif current_law_id == 'normal' %}
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Moyenne ($\mu$) :</label>
+                    <input type="number" name="mu" value="{{ law.params.mu }}" step="1" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Écart-type ($\sigma$) :</label>
+                    <input type="number" name="sigma" value="{{ law.params.sigma }}" min="0.1" step="0.5" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Intervalle de probabilité [x1, x2] : x1</label>
+                    <input type="number" name="range_x1" value="{{ law.params.range_x1 }}" step="1" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">x2 :</label>
+                    <input type="number" name="range_x2" value="{{ law.params.range_x2 }}" step="1" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                {% elif current_law_id == 'standard_normal' %}
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Valeur du Z-score (z) :</label>
+                    <input type="number" name="z" value="{{ law.params.z }}" min="-4" max="4" step="0.05" class="w-full text-sm font-mono font-bold p-2 border border-slate-200 rounded-lg text-center outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="sm:col-span-3 flex items-end gap-2 text-xs text-slate-500">
+                    <span>Valeurs classiques :</span>
+                    <a href="?law=standard_normal&z=1.0" class="underline">z = 1.0 (68%)</a> &bull;
+                    <a href="?law=standard_normal&z=1.96" class="underline font-bold text-brand-600">z = 1.96 (95%)</a> &bull;
+                    <a href="?law=standard_normal&z=2.58" class="underline">z = 2.58 (99%)</a>
+                </div>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 3. RÉSULTATS DÉTAILLÉS DE LA LOI SÉLECTIONNÉE                   -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Colonne Gauche : Définition, Formule, Espérance, Variance -->
+        <div class="space-y-6">
+            <!-- Définition & Formule -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+                <div>
+                    <span class="text-xs font-semibold text-brand-600 uppercase tracking-wider">1. Définition du cours</span>
+                    <h4 class="text-sm font-bold text-slate-900 mt-0.5">{{ law.name }}</h4>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed">{{ law.definition }}</p>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100">
+                    <span class="text-xs font-semibold text-slate-700 uppercase tracking-wider block mb-1">2. Formule mathématique :</span>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-center text-xs font-serif overflow-x-auto">
+                        {% if law.formula_latex %}$${{ law.formula_latex }}$${% endif %}
+                        {% if law.density_latex %}$${{ law.density_latex }}$${% endif %}
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-slate-100">
+                    <span class="text-xs font-semibold text-slate-700 uppercase tracking-wider block mb-1">4. Cas d'utilisation typique :</span>
+                    <p class="text-xs text-slate-600 bg-brand-50/50 p-2.5 rounded-xl border border-brand-100 leading-relaxed">
+                        {{ law.use_case }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Paramètres Statistiques Clés (E, V, Sigma) -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+                <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider pb-2 border-b border-slate-100">
+                    Indicateurs Théoriques
+                </h4>
+
+                <!-- Espérance E(X) -->
+                <div class="p-3 bg-brand-50/60 rounded-xl border border-brand-100 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-brand-800">Espérance mathématique :</span>
+                        <div class="text-xs text-slate-600 font-serif">${{ law.expectation.latex }}$</div>
+                    </div>
+                    <span class="text-xl font-black font-mono text-brand-700">{{ law.expectation.formatted }}</span>
+                </div>
+
+                <!-- Variance V(X) -->
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/70 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-slate-800">Variance :</span>
+                        <div class="text-xs text-slate-600 font-serif">${{ law.variance.latex }}$</div>
+                    </div>
+                    <span class="text-xl font-black font-mono text-slate-700">{{ law.variance.formatted }}</span>
+                </div>
+
+                <!-- Écart-type Sigma -->
+                <div class="p-3 bg-emerald-50/60 rounded-xl border border-emerald-100 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-semibold text-emerald-800">Écart-type ($\sigma$) :</span>
+                        <div class="text-xs text-slate-600 font-serif">${{ law.std_dev.latex }}$</div>
+                    </div>
+                    <span class="text-xl font-black font-mono text-emerald-700">{{ law.std_dev.formatted }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne Droite : Visualisation Graphique Matplotlib & Probabilités calculées -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Matplotlib Chart Card -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+                <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-1">Visualisation Graphique : Densité & Aire sous la courbe</h4>
+                <p class="text-xs text-slate-500 mb-3">La probabilité correspond exactement à la hauteur du bâton (discret) ou à l'aire ombrée sous la courbe (continu).</p>
+                <div class="bg-slate-50 rounded-xl p-2 flex items-center justify-center border border-slate-100">
+                    {% if chart_law %}
+                    <img src="{{ chart_law }}" alt="Graphique de la loi de probabilité" class="max-w-full h-auto rounded-lg">
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Probabilités Calculées pour les paramètres -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+                <h4 class="text-xs font-bold text-slate-900 uppercase tracking-wider pb-2 border-b border-slate-100">
+                    Probabilités Calculées selon vos Paramètres
+                </h4>
+
+                {% if current_law_id == 'bernoulli' %}
+                <div class="grid grid-cols-2 gap-4">
+                    {% for p in law.probabilities %}
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/60 text-center">
+                        <span class="text-xs font-bold text-slate-700 block mb-1">{{ p.label }}</span>
+                        <span class="text-2xl font-black font-mono text-brand-600">{{ p.percent }}</span>
+                        <span class="text-xs text-slate-400 block mt-1 font-mono">P = {{ p.prob }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% elif current_law_id == 'binomial' or current_law_id == 'poisson' %}
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div class="p-3 bg-amber-50 rounded-xl border border-amber-200 text-center">
+                        <span class="text-xs font-bold text-amber-800 block mb-1">Exactement k = {{ law.params.k }}</span>
+                        <span class="text-xl font-black font-mono text-amber-700">{{ law.query.prob_exact_percent }}</span>
+                        <span class="text-[11px] text-amber-600 block mt-1 font-mono">P(X = {{ law.params.k }}) = {{ law.query.prob_exact }}</span>
+                    </div>
+                    <div class="p-3 bg-brand-50 rounded-xl border border-brand-200 text-center">
+                        <span class="text-xs font-bold text-brand-800 block mb-1">Au plus k (Cumulé ≤ {{ law.params.k }})</span>
+                        <span class="text-xl font-black font-mono text-brand-700">{{ law.query.prob_leq_percent }}</span>
+                        <span class="text-[11px] text-brand-600 block mt-1 font-mono">P(X ≤ {{ law.params.k }}) = {{ law.query.prob_leq }}</span>
+                    </div>
+                    <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+                        <span class="text-xs font-bold text-emerald-800 block mb-1">Au moins k (Cumulé ≥ {{ law.params.k }})</span>
+                        <span class="text-xl font-black font-mono text-emerald-700">{{ law.query.prob_geq_percent }}</span>
+                        <span class="text-[11px] text-emerald-600 block mt-1 font-mono">P(X ≥ {{ law.params.k }}) = {{ law.query.prob_geq }}</span>
+                    </div>
+                </div>
+
+                {% elif current_law_id == 'uniform_discrete' %}
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-brand-50 rounded-xl border border-brand-200 text-center">
+                        <span class="text-xs font-bold text-brand-800 block mb-1">Probabilité unitaire P(X = {{ law.params.k }})</span>
+                        <span class="text-2xl font-black font-mono text-brand-700">{{ law.query.prob_exact_percent }}</span>
+                        <span class="text-xs text-brand-500 block mt-1 font-mono">1 / {{ law.params.n }}</span>
+                    </div>
+                    <div class="p-4 bg-emerald-50 rounded-xl border border-emerald-200 text-center">
+                        <span class="text-xs font-bold text-emerald-800 block mb-1">Cumulé P(X ≤ {{ law.params.k }})</span>
+                        <span class="text-2xl font-black font-mono text-emerald-700">{{ law.query.prob_leq_percent }}</span>
+                    </div>
+                </div>
+
+                {% elif current_law_id == 'uniform_continuous' %}
+                <div class="p-4 bg-brand-50/70 rounded-xl border border-brand-200 text-center space-y-1">
+                    <span class="text-xs font-bold text-brand-800 block">Probabilité dans l'intervalle [{{ law.query.x1 }}, {{ law.query.x2 }}] :</span>
+                    <span class="text-3xl font-black font-mono text-brand-700">{{ law.query.prob_range_percent }}</span>
+                    <div class="text-xs font-mono text-slate-700 pt-1">$${{ law.query.calc }}$$</div>
+                </div>
+
+                {% elif current_law_id == 'exponential' %}
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-brand-50 rounded-xl border border-brand-200 text-center">
+                        <span class="text-xs font-bold text-brand-800 block mb-1">Avant t = {{ law.params.x }} : P(X ≤ {{ law.params.x }})</span>
+                        <span class="text-2xl font-black font-mono text-brand-700">{{ law.query.prob_leq_percent }}</span>
+                        <div class="text-[11px] font-mono text-slate-600 mt-1">$${{ law.query.prob_leq_calc }}$$</div>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 text-center">
+                        <span class="text-xs font-bold text-slate-800 block mb-1">Après t = {{ law.params.x }} : P(X > {{ law.params.x }})</span>
+                        <span class="text-2xl font-black font-mono text-slate-700">{{ law.query.prob_gt_percent }}</span>
+                        <div class="text-[11px] font-mono text-slate-600 mt-1">$${{ law.query.prob_gt_calc }}$$</div>
+                    </div>
+                </div>
+
+                {% elif current_law_id == 'normal' %}
+                <div class="space-y-3">
+                    <div class="p-4 bg-brand-50/70 rounded-xl border border-brand-200 text-center">
+                        <span class="text-xs font-bold text-brand-800 block mb-1">Probabilité entre {{ law.params.range_x1 }} et {{ law.params.range_x2 }} :</span>
+                        <span class="text-3xl font-black font-mono text-brand-700">{{ law.query.prob_between_percent }}</span>
+                        <span class="text-xs text-brand-600 block mt-1 font-mono">P({{ law.params.range_x1 }} ≤ X ≤ {{ law.params.range_x2 }}) = {{ law.query.prob_between }}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 text-center">
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <span class="text-xs text-slate-600 block">Queue gauche : P(X ≤ {{ law.params.x }})</span>
+                            <span class="text-lg font-bold font-mono text-slate-800">{{ law.query.prob_leq_percent }}</span>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                            <span class="text-xs text-slate-600 block">Score standardisé Z de x={{ law.params.x }}</span>
+                            <span class="text-lg font-bold font-mono text-indigo-600">z = {{ law.query.z_score }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {% elif current_law_id == 'standard_normal' %}
+                <div class="space-y-4">
+                    <div class="p-4 bg-emerald-50/70 rounded-xl border border-emerald-200 text-center">
+                        <span class="text-xs font-bold text-emerald-800 block mb-1">Probabilité cumulée $\Phi(z) = P(Z \le {{ law.params.z }})$ :</span>
+                        <span class="text-3xl font-black font-mono text-emerald-700">{{ law.query.prob_leq_percent }}</span>
+                        <div class="text-xs font-mono text-emerald-900 mt-1">$${{ law.query.calc_latex }}$$</div>
+                    </div>
+
+                    <!-- Règle des 68-95-99.7% du cours de Pr. CHADI -->
+                    <div class="border border-slate-200 rounded-xl overflow-hidden text-xs">
+                        <div class="bg-slate-100 p-2.5 font-bold text-slate-700">
+                            Règle des 68 - 95 - 99.7 % (Fondement du cours de Pr. CHADI) :
+                        </div>
+                        <table class="w-full text-left">
+                            <tbody>
+                                {% for r in law.empirical_rule %}
+                                <tr class="border-t border-slate-100 hover:bg-slate-50">
+                                    <td class="p-2.5 font-serif font-bold text-brand-700">{{ r.interval }}</td>
+                                    <td class="p-2.5 font-mono text-slate-500">{{ r.z_range }}</td>
+                                    <td class="p-2.5 font-mono font-black text-slate-900 text-sm">{{ r.percent }}</td>
+                                    <td class="p-2.5 text-slate-600">{{ r.desc }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Interprétation finale -->
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs text-slate-600 leading-relaxed">
+                    <span class="font-bold text-slate-800 block mb-1">11. Interprétation du résultat pour l'étudiant :</span>
+                    {{ law.interpretation }}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

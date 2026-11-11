@@ -1,0 +1,283 @@
+{% extends 'stat_app/base.html' %}
+
+{% block title %}Analyse Combinatoire — Statistiques & Probabilités{% endblock %}
+{% block page_title %}4. Analyse Combinatoire{% endblock %}
+{% block page_subtitle %}Dénombrement méthodique : Énumération, Arrangements et Combinaisons{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- ============================================================== -->
+    <!-- INTERACTIVE CONTROLS CARD (n et k)                            -->
+    <!-- ============================================================== -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+        <form method="GET" action="{% url 'stat_app:combinatorics' %}" class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
+            <!-- Parameter n -->
+            <div>
+                <label for="inputN" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                    Taille de l'ensemble (n) :
+                </label>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="inputN" name="n" value="{{ n }}" min="1" max="30"
+                           class="w-full text-sm font-mono font-bold p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition text-center">
+                    <span class="text-xs text-slate-400">éléments</span>
+                </div>
+            </div>
+
+            <!-- Parameter k -->
+            <div>
+                <label for="inputK" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                    Nombre d'éléments choisis (k) :
+                </label>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="inputK" name="k" value="{{ k }}" min="0" max="{{ n }}"
+                           class="w-full text-sm font-mono font-bold p-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition text-center">
+                    <span class="text-xs text-slate-400">tirages</span>
+                </div>
+            </div>
+
+            <!-- Submit Button & Quick presets -->
+            <div class="flex items-center gap-2">
+                <button type="submit" class="flex-1 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    Calculer
+                </button>
+                <a href="?n=8&k=3" class="px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-xl transition" title="Exemple du cours (n=8, k=3)">
+                    Cours (8, 3)
+                </a>
+            </div>
+        </form>
+
+        <!-- Tableau d'aide à la décision du cours de Pr. CHADI -->
+        <div class="mt-6 pt-4 border-t border-slate-100">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                Guide de décision selon les 2 questions fondamentales (Pr. CHADI) :
+            </span>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                <div class="p-3 bg-rose-50/60 rounded-xl border border-rose-100">
+                    <span class="font-bold text-rose-800 block mb-0.5">1. Énumération</span>
+                    <span class="text-slate-600">Ordre : <b class="text-rose-700">OUI</b> &bull; Répétition : <b class="text-rose-700">OUI</b></span>
+                    <span class="block mt-1 font-mono font-semibold text-rose-900">Formule : $n^k$</span>
+                </div>
+                <div class="p-3 bg-blue-50/60 rounded-xl border border-blue-100">
+                    <span class="font-bold text-blue-800 block mb-0.5">2. Arrangement</span>
+                    <span class="text-slate-600">Ordre : <b class="text-blue-700">OUI</b> &bull; Répétition : <b class="text-blue-700">NON</b></span>
+                    <span class="block mt-1 font-mono font-semibold text-blue-900">Formule : $A_n^k = \frac{n!}{(n-k)!}$</span>
+                </div>
+                <div class="p-3 bg-emerald-50/60 rounded-xl border border-emerald-100">
+                    <span class="font-bold text-emerald-800 block mb-0.5">3. Combinaison</span>
+                    <span class="text-slate-600">Ordre : <b class="text-emerald-700">NON</b> &bull; Répétition : <b class="text-emerald-700">NON</b></span>
+                    <span class="block mt-1 font-mono font-semibold text-emerald-900">Formule : $C_n^k = \binom{n}{k} = \frac{n!}{k!(n-k)!}$</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- 3 CARTES DE CONCEPTS COMBINATOIRES                             -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- 1. ÉNUMÉRATION -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between overflow-hidden">
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                        <span class="text-xs font-semibold text-rose-600 uppercase tracking-wider">Concept 1</span>
+                        <h4 class="text-base font-bold text-slate-900">Énumération</h4>
+                    </div>
+                    <div class="w-9 h-9 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center font-bold text-sm">
+                        $n^k$
+                    </div>
+                </div>
+
+                <!-- Conditions -->
+                <div class="flex gap-2 text-xs">
+                    <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">Ordre : <b>OUI</b></span>
+                    <span class="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 font-medium">Répétition : <b>OUI</b></span>
+                </div>
+
+                <!-- Résultat -->
+                <div class="p-4 bg-rose-50/70 rounded-xl border border-rose-200 text-center">
+                    <span class="text-xs text-rose-800 font-medium block mb-1">Nombre de dispositions possibles :</span>
+                    <span class="text-3xl font-black text-rose-700 font-mono tracking-tight">{{ comb.enumeration.result_formatted }}</span>
+                </div>
+
+                <!-- Formule -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Formule :</h5>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-center text-sm font-serif">
+                        $${{ comb.enumeration.formula_latex }}$$
+                    </div>
+                </div>
+
+                <!-- Calcul avec n et k réels -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Calcul appliqué (n={{ n }}, k={{ k }}) :</h5>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-xs font-mono text-slate-800 text-center overflow-x-auto">
+                        $${{ comb.enumeration.formula_applied }}$$
+                    </div>
+                </div>
+
+                <!-- Étapes -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Étapes de raisonnement :</h5>
+                    <ul class="space-y-1.5 text-xs text-slate-600 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                        {% for step in comb.enumeration.steps %}
+                        <li class="flex items-start gap-1.5">
+                            <span class="text-rose-500 font-bold">•</span>
+                            <span>{{ step }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Exemple pratique -->
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs text-slate-600 leading-relaxed">
+                    <span class="font-bold text-slate-800 block mb-1">Cas pratique :</span>
+                    {{ comb.enumeration.example }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. ARRANGEMENT -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between overflow-hidden">
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                        <span class="text-xs font-semibold text-blue-600 uppercase tracking-wider">Concept 2</span>
+                        <h4 class="text-base font-bold text-slate-900">Arrangement</h4>
+                    </div>
+                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-sm">
+                        $A_n^k$
+                    </div>
+                </div>
+
+                <!-- Conditions -->
+                <div class="flex gap-2 text-xs">
+                    <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">Ordre : <b>OUI</b></span>
+                    <span class="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 font-medium">Répétition : <b>NON</b></span>
+                </div>
+
+                <!-- Résultat -->
+                <div class="p-4 bg-blue-50/70 rounded-xl border border-blue-200 text-center">
+                    <span class="text-xs text-blue-800 font-medium block mb-1">Nombre d'arrangements possibles :</span>
+                    <span class="text-3xl font-black text-blue-700 font-mono tracking-tight">{{ comb.arrangement.result_formatted }}</span>
+                </div>
+
+                <!-- Formule -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Formule :</h5>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-center text-sm font-serif">
+                        $${{ comb.arrangement.formula_latex }}$$
+                    </div>
+                </div>
+
+                <!-- Calcul avec n et k réels -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Calcul appliqué (n={{ n }}, k={{ k }}) :</h5>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-xs font-mono text-slate-800 text-center overflow-x-auto">
+                        $${{ comb.arrangement.formula_applied }}$$
+                    </div>
+                </div>
+
+                <!-- Étapes -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Étapes de décomposition :</h5>
+                    <ul class="space-y-1.5 text-xs text-slate-600 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                        {% for step in comb.arrangement.steps %}
+                        <li class="flex items-start gap-1.5">
+                            <span class="text-blue-500 font-bold">•</span>
+                            <span>{{ step }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Exemple pratique -->
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs text-slate-600 leading-relaxed">
+                    <span class="font-bold text-slate-800 block mb-1">Cas pratique :</span>
+                    {{ comb.arrangement.example }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. COMBINAISON -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between overflow-hidden">
+            <div class="p-6 space-y-4">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                        <span class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Concept 3</span>
+                        <h4 class="text-base font-bold text-slate-900">Combinaison</h4>
+                    </div>
+                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                        $C_n^k$
+                    </div>
+                </div>
+
+                <!-- Conditions -->
+                <div class="flex gap-2 text-xs">
+                    <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">Ordre : <b>NON</b></span>
+                    <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-medium">Répétition : <b>NON</b></span>
+                </div>
+
+                <!-- Résultat -->
+                <div class="p-4 bg-emerald-50/70 rounded-xl border border-emerald-200 text-center">
+                    <span class="text-xs text-emerald-800 font-medium block mb-1">Nombre de combinaisons possibles :</span>
+                    <span class="text-3xl font-black text-emerald-700 font-mono tracking-tight">{{ comb.combination.result_formatted }}</span>
+                </div>
+
+                <!-- Formule -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Formule :</h5>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-center text-sm font-serif">
+                        $${{ comb.combination.formula_latex }}$$
+                    </div>
+                </div>
+
+                <!-- Calcul avec n et k réels -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Calcul appliqué (n={{ n }}, k={{ k }}) :</h5>
+                    <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/60 text-xs font-mono text-slate-800 text-center overflow-x-auto">
+                        $${{ comb.combination.formula_applied }}$$
+                    </div>
+                </div>
+
+                <!-- Étapes -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Étapes de calcul :</h5>
+                    <ul class="space-y-1.5 text-xs text-slate-600 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                        {% for step in comb.combination.steps %}
+                        <li class="flex items-start gap-1.5">
+                            <span class="text-emerald-500 font-bold">•</span>
+                            <span>{{ step }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Exemple pratique -->
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs text-slate-600 leading-relaxed">
+                    <span class="font-bold text-slate-800 block mb-1">Cas pratique :</span>
+                    {{ comb.combination.example }}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- VISUALISATION GRAPHIQUE COMPARATIVE                            -->
+    <!-- ============================================================== -->
+    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+        <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-1">Visualisation : Croissance Combinatoire Comparée</h4>
+        <p class="text-xs text-slate-500 mb-4">Évolution comparée de $n^k$, $A_n^k$ et $C_n^k$ pour $n = {{ n }}$ lorsque $k$ varie de 0 à $n$.</p>
+        <div class="bg-slate-50 rounded-xl p-2 flex items-center justify-center border border-slate-100">
+            {% if chart_growth %}
+            <img src="{{ chart_growth }}" alt="Graphique comparatif combinatoire" class="max-w-full h-auto rounded-lg">
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,274 @@
+{% extends 'stat_app/base.html' %}
+
+{% block title %}Tendances Centrales — Statistiques & Probabilités{% endblock %}
+{% block page_title %}2. Tendances Centrales{% endblock %}
+{% block page_subtitle %}Moyenne arithmétique, Médiane et Mode avec formules, applications réelles et étapes détaillées{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Active Dataset reminder badge -->
+    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center font-bold">
+                $\bar{x}$
+            </div>
+            <div>
+                <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Données analysées</h3>
+                <p class="text-xs font-mono text-slate-800 font-medium">
+                    {% for v in dataset %}{{ v|floatformat:2 }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-xs px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg font-mono font-semibold">{{ dataset_count }} observations</span>
+            <button onclick="openDataModal()" class="text-xs px-3 py-1 bg-brand-50 hover:bg-brand-100 text-brand-700 font-medium rounded-lg transition">
+                Modifier les données
+            </button>
+        </div>
+    </div>
+
+    {% if ct %}
+    <!-- ============================================================== -->
+    <!-- 3 CARTES PRINCIPALES : MOYENNE, MÉDIANE, MODE                  -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- 1. MOYENNE ARITHMÉTIQUE -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between overflow-hidden">
+            <div class="p-6 space-y-4">
+                <!-- Header Card -->
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                        <span class="text-xs font-semibold text-brand-600 uppercase tracking-wider">Indicateur 1</span>
+                        <h4 class="text-base font-bold text-slate-900">{{ ct.mean.name }}</h4>
+                    </div>
+                    <div class="w-9 h-9 rounded-xl bg-brand-50 text-brand-700 flex items-center justify-center font-bold text-sm">
+                        ${{ ct.mean.symbol }}$
+                    </div>
+                </div>
+
+                <!-- Résultat Numérique -->
+                <div class="p-4 bg-brand-50/60 rounded-xl border border-brand-100 text-center">
+                    <span class="text-xs text-brand-800 font-medium block mb-1">Résultat numérique :</span>
+                    <span class="text-3xl font-black text-brand-700 font-mono tracking-tight">{{ ct.mean.value_formatted }}</span>
+                </div>
+
+                <!-- Formule Mathématique -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Formule mathématique :</h5>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60 text-center text-sm font-serif">
+                        $${{ ct.mean.formula_latex }}$$
+                    </div>
+                </div>
+
+                <!-- Application avec les données réelles -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Application aux données réelles :</h5>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60 text-xs font-mono text-slate-800 overflow-x-auto text-center">
+                        $${{ ct.mean.formula_applied }}$$
+                    </div>
+                </div>
+
+                <!-- Étapes Détaillées du calcul -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Étapes de calcul :</h5>
+                    <ul class="space-y-1.5 text-xs text-slate-600 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                        {% for step in ct.mean.steps %}
+                        <li class="flex items-start gap-1.5">
+                            <span class="text-brand-500 font-bold">•</span>
+                            <span>{{ step }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Explication simple -->
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs text-slate-600 leading-relaxed">
+                    <span class="font-bold text-slate-800 block mb-1">Quand l'utiliser & Interprétation :</span>
+                    {{ ct.mean.explanation }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. MÉDIANE -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between overflow-hidden">
+            <div class="p-6 space-y-4">
+                <!-- Header Card -->
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                        <span class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Indicateur 2</span>
+                        <h4 class="text-base font-bold text-slate-900">{{ ct.median.name }}</h4>
+                    </div>
+                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                        ${{ ct.median.symbol }}$
+                    </div>
+                </div>
+
+                <!-- Résultat Numérique -->
+                <div class="p-4 bg-emerald-50/60 rounded-xl border border-emerald-100 text-center">
+                    <span class="text-xs text-emerald-800 font-medium block mb-1">Résultat numérique :</span>
+                    <span class="text-3xl font-black text-emerald-700 font-mono tracking-tight">{{ ct.median.value_formatted }}</span>
+                </div>
+
+                <!-- Formule Mathématique -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Formule mathématique :</h5>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60 text-center text-xs font-serif overflow-x-auto">
+                        $${{ ct.median.formula_latex }}$$
+                    </div>
+                </div>
+
+                <!-- Application avec les données réelles -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Application aux données réelles :</h5>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60 text-xs font-mono text-slate-800 overflow-x-auto text-center">
+                        $${{ ct.median.formula_applied }}$$
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1 text-center">Série triée : [{{ ct.median.sorted_preview }}]</p>
+                </div>
+
+                <!-- Étapes Détaillées du calcul -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Étapes de calcul :</h5>
+                    <ul class="space-y-1.5 text-xs text-slate-600 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                        {% for step in ct.median.steps %}
+                        <li class="flex items-start gap-1.5">
+                            <span class="text-emerald-500 font-bold">•</span>
+                            <span>{{ step }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Explication simple -->
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs text-slate-600 leading-relaxed">
+                    <span class="font-bold text-slate-800 block mb-1">Quand l'utiliser & Interprétation :</span>
+                    {{ ct.median.explanation }}
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. MODE -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between overflow-hidden">
+            <div class="p-6 space-y-4">
+                <!-- Header Card -->
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                        <span class="text-xs font-semibold text-amber-600 uppercase tracking-wider">Indicateur 3</span>
+                        <h4 class="text-base font-bold text-slate-900">{{ ct.mode.name }}</h4>
+                    </div>
+                    <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold text-sm">
+                        ${{ ct.mode.symbol }}$
+                    </div>
+                </div>
+
+                <!-- Résultat Numérique -->
+                <div class="p-4 bg-amber-50/60 rounded-xl border border-amber-100 text-center">
+                    <span class="text-xs text-amber-800 font-medium block mb-1">Type : {{ ct.mode.mode_type }}</span>
+                    <span class="text-3xl font-black text-amber-700 font-mono tracking-tight">{{ ct.mode.value_formatted }}</span>
+                </div>
+
+                <!-- Formule Mathématique -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Formule mathématique :</h5>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/60 text-center text-xs font-serif overflow-x-auto">
+                        $${{ ct.mode.formula_latex }}$$
+                    </div>
+                </div>
+
+                <!-- Tableau des effectifs -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Tableau des effectifs fréquents :</h5>
+                    <div class="border border-slate-200 rounded-xl overflow-hidden text-xs">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-100 text-slate-600">
+                                <tr>
+                                    <th class="p-2">Valeur</th>
+                                    <th class="p-2">Effectif (n_i)</th>
+                                    <th class="p-2">Fréquence</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in ct.mode.freq_table %}
+                                <tr class="border-t border-slate-100 {% if item.is_mode %}bg-amber-50 font-semibold text-amber-900{% endif %}">
+                                    <td class="p-2 font-mono">{{ item.val }} {% if item.is_mode %}⭐{% endif %}</td>
+                                    <td class="p-2">{{ item.freq }} fois</td>
+                                    <td class="p-2 text-slate-500">{{ item.percent }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Étapes Détaillées du calcul -->
+                <div>
+                    <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Étapes de calcul :</h5>
+                    <ul class="space-y-1.5 text-xs text-slate-600 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                        {% for step in ct.mode.steps %}
+                        <li class="flex items-start gap-1.5">
+                            <span class="text-amber-500 font-bold">•</span>
+                            <span>{{ step }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Explication simple -->
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs text-slate-600 leading-relaxed">
+                    <span class="font-bold text-slate-800 block mb-1">Quand l'utiliser & Interprétation :</span>
+                    {{ ct.mode.explanation }}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- SYNTHÈSE ASYMÉTRIE & VISUALISATION GRAPHIQUE                   -->
+    <!-- ============================================================== -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <!-- Diagnostic d'asymétrie -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-4">
+            <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Synthèse Comparative : Moyenne vs Médiane</h4>
+            <div class="p-4 bg-indigo-50/70 border border-indigo-100 rounded-xl text-xs text-indigo-950 leading-relaxed">
+                <span class="font-bold block mb-1">Diagnostic de forme :</span>
+                {{ ct.symmetry }}
+            </div>
+            
+            <div class="space-y-2 text-xs text-slate-600">
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+                    <span>Moyenne arithmétique :</span>
+                    <span class="font-bold font-mono text-brand-600">{{ ct.mean.value_formatted }}</span>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+                    <span>Médiane :</span>
+                    <span class="font-bold font-mono text-emerald-600">{{ ct.median.value_formatted }}</span>
+                </div>
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+                    <span>Différence (x̄ - Me) :</span>
+                    <span class="font-mono font-semibold">{{ ct.mean.value|add:ct.median.value|floatformat:2 }}</span>
+                </div>
+            </div>
+
+            <p class="text-[11px] text-slate-400 italic">
+                Règle pratique : Si Moyenne > Médiane, la distribution s'étire vers la droite (asymétrie positive). Si Moyenne < Médiane, elle s'étire vers la gauche (asymétrie négative).
+            </p>
+        </div>
+
+        <!-- Matplotlib Chart -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs">
+            <h4 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">Graphique : Histogramme & Droites de repère</h4>
+            <div class="bg-slate-50 rounded-xl p-2 flex items-center justify-center border border-slate-100">
+                {% if chart_ct %}
+                <img src="{{ chart_ct }}" alt="Graphique des Tendances Centrales" class="max-w-full h-auto rounded-lg">
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+
+</div>
+{% endblock %}

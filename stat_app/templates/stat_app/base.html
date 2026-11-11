@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Statistiques & Probabilités{% endblock %} — Guide Éducatif</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- KaTeX for rendering mathematical formulas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+            onload="renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\[', right: '\\]', display: true},
+                    {left: '\\(', right: '\\)', display: false}
+                ],
+                throwOnError: false
+            });"></script>
+
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .katex-display { margin: 0.5em 0; overflow-x: auto; overflow-y: hidden; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="h-full text-slate-800 antialiased flex flex-col md:flex-row overflow-x-hidden">
+
+    <!-- ============================================================== -->
+    <!-- SIDEBAR FIXE À GAUCHE (7 CATÉGORIES STRICTES)                  -->
+    <!-- ============================================================== -->
+    <aside class="w-full md:w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col justify-between z-30 md:fixed md:top-0 md:bottom-0 md:left-0 shadow-sm">
+        <div>
+            <!-- Header Brand -->
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                <a href="{% url 'stat_app:dashboard' %}" class="flex items-center space-x-3 group">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20 group-hover:scale-105 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-slate-900 tracking-tight text-base leading-tight">StatLab</h1>
+                        <p class="text-[11px] font-medium text-brand-600">Statistiques & Probabilités</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Navigation Links : EXACTEMENT LES 7 CATÉGORIES DEMANDÉES -->
+            <nav class="p-3 space-y-1">
+                <!-- 1. Dashboard -->
+                <a href="{% url 'stat_app:dashboard' %}" 
+                   class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition {% if active_category == 'dashboard' %}bg-brand-50 text-brand-700 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-4 h-4 {% if active_category == 'dashboard' %}text-brand-600{% else %}text-slate-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        <span>1. Dashboard</span>
+                    </div>
+                    <span class="text-xs px-2 py-0.5 rounded-full {% if active_category == 'dashboard' %}bg-brand-100 text-brand-700{% else %}bg-slate-100 text-slate-500{% endif %} font-mono">n={{ dataset_count }}</span>
+                </a>
+
+                <!-- SECTION : Visualisation des données -->
+                <a href="{% url 'stat_app:visualizations' %}" 
+                   class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition {% if active_category == 'visualizations' %}bg-brand-50 text-brand-700 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-4 h-4 {% if active_category == 'visualizations' %}text-brand-600{% else %}text-slate-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                        </svg>
+                        <span>Visualisation des données</span>
+                    </div>
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded {% if active_category == 'visualizations' %}bg-brand-200 text-brand-800{% else %}bg-slate-100 text-slate-500{% endif %}">7 Graph.</span>
+                </a>
+
+                <!-- 2. Tendances centrales -->
+                <a href="{% url 'stat_app:central' %}" 
+                   class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition {% if active_category == 'central' %}bg-brand-50 text-brand-700 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <svg class="w-4 h-4 {% if active_category == 'central' %}text-brand-600{% else %}text-slate-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span>2. Tendances centrales</span>
+                </a>
+
+                <!-- 3. Tendances de variabilité -->
+                <a href="{% url 'stat_app:variability' %}" 
+                   class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition {% if active_category == 'variability' %}bg-brand-50 text-brand-700 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <svg class="w-4 h-4 {% if active_category == 'variability' %}text-brand-600{% else %}text-slate-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                    </svg>
+                    <span>3. Tendances de variabilité</span>
+                </a>
+
+                <!-- 4. Analyse combinatoire -->
+                <a href="{% url 'stat_app:combinatorics' %}" 
+                   class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition {% if active_category == 'combinatorics' %}bg-brand-50 text-brand-700 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <svg class="w-4 h-4 {% if active_category == 'combinatorics' %}text-brand-600{% else %}text-slate-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                    <span>4. Analyse combinatoire</span>
+                </a>
+
+                <!-- 5. Probabilité discrète -->
+                <a href="{% url 'stat_app:discrete' %}" 
+                   class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition {% if active_category == 'discrete' %}bg-brand-50 text-brand-700 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <svg class="w-4 h-4 {% if active_category == 'discrete' %}text-brand-600{% else %}text-slate-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    <span>5. Probabilité discrète</span>
+                </a>
+
+                <!-- 6. Probabilité conditionnelle -->
+                <a href="{% url 'stat_app:conditional' %}" 
+                   class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition {% if active_category == 'conditional' %}bg-brand-50 text-brand-700 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <svg class="w-4 h-4 {% if active_category == 'conditional' %}text-brand-600{% else %}text-slate-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    <span>6. Probabilité conditionnelle</span>
+                </a>
+
+                <!-- 7. Lois de probabilité -->
+                <a href="{% url 'stat_app:distributions' %}" 
+                   class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition {% if active_category == 'distributions' %}bg-brand-50 text-brand-700 font-semibold shadow-sm{% else %}text-slate-600 hover:bg-slate-50 hover:text-slate-900{% endif %}">
+                    <svg class="w-4 h-4 {% if active_category == 'distributions' %}text-brand-600{% else %}text-slate-400{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                    <span>7. Lois de probabilité</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Sidebar Footer : Active Dataset Status -->
+        <div class="p-4 border-t border-slate-100 bg-slate-50/70">
+            <div class="bg-white rounded-xl p-3 border border-slate-200/80 shadow-xs mb-3">
+                <div class="flex items-center justify-between text-xs text-slate-500 mb-1">
+                    <span class="font-medium">Série active :</span>
+                    <span class="text-emerald-600 font-semibold flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> {{ dataset_count }} obs.
+                    </span>
+                </div>
+                <div class="text-xs text-slate-700 truncate font-mono" title="{{ dataset_source }}">
+                    {{ dataset_source }}
+                </div>
+                <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
+                    <span>Moyenne x̄ :</span>
+                    <span class="font-bold text-brand-600 font-mono">{{ dataset_mean }}</span>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="openDataModal()" class="flex-1 text-xs py-2 px-3 bg-brand-50 hover:bg-brand-100 text-brand-700 font-medium rounded-lg transition text-center flex items-center justify-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Données
+                </button>
+                <a href="{% url 'stat_app:export_excel' %}" title="Exporter en Excel" class="text-xs py-2 px-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium rounded-lg transition flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ============================================================== -->
+    <!-- ZONE PRINCIPALE À DROITE                                      -->
+    <!-- ============================================================== -->
+    <main class="flex-1 md:ml-64 flex flex-col min-h-screen">
+        <!-- Top App Bar -->
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-20 px-6 py-3.5 flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-bold text-slate-800 tracking-tight flex items-center gap-2">
+                    {% block page_title %}Tableau de bord statistique{% endblock %}
+                </h2>
+                <p class="text-xs text-slate-500">{% block page_subtitle %}Visualisations & calculs pas à pas{% endblock %}</p>
+            </div>
+
+            <!-- Quick Data Actions Bar -->
+            <div class="flex items-center space-x-3">
+                <a href="{% url 'stat_app:visualizations' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg transition">
+                    <svg class="w-3.5 h-3.5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                    </svg>
+                    Visualisations
+                </a>
+                <button onclick="openDataModal()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition">
+                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Saisir / Importer
+                </button>
+                <button onclick="loadPreset('cours')" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg transition">
+                    <svg class="w-3.5 h-3.5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Exemple cours (7 val.)
+                </button>
+                <a href="{% url 'stat_app:export_excel' %}" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition">
+                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Export Excel (.xlsx)
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 p-6 md:p-8 max-w-7xl w-full mx-auto">
+            {% block content %}{% endblock %}
+        </div>
+
+        
+    </main>
+
+    <!-- ============================================================== -->
+    <!-- MODAL GESTION DES DONNÉES (ACCESSIBLE PARTOUT)                  -->
+    <!-- ============================================================== -->
+    <div id="dataModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+                <div>
+                    <h3 class="text-base font-bold text-slate-900">Gestion des Données Statistiques</h3>
+                    <p class="text-xs text-slate-500">Saisie manuelle ou Importation de fichier Excel/CSV</p>
+                </div>
+                <button onclick="closeDataModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+
+            <!-- Tabs: Saisie vs Excel -->
+            <div class="flex border-b border-slate-200 mt-4">
+                <button id="tabBtnManual" onclick="switchDataTab('manual')" class="py-2 px-4 text-xs font-semibold border-b-2 border-brand-600 text-brand-600 transition">
+                    A. Saisie manuelle
+                </button>
+                <button id="tabBtnExcel" onclick="switchDataTab('excel')" class="py-2 px-4 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition">
+                    B. Importation Excel / CSV
+                </button>
+            </div>
+
+            <!-- Tab Content: Saisie Manuelle -->
+            <div id="tabContentManual" class="pt-4 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">
+                        Saisissez les nombres (séparés par des virgules, espaces ou retours à la ligne) :
+                    </label>
+                    <textarea id="manualInputText" rows="4" class="w-full text-xs font-mono p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition"
+                              placeholder="Exemple : 12, 15, 18, 20, 15, 25, 30, 15, 40">{% for v in dataset %}{{ v|floatformat:2 }}{% if not forloop.last %}, {% endif %}{% endfor %}</textarea>
+                    <p class="text-[11px] text-slate-400 mt-1">Accepte les virgules ou les points pour les décimales (ex: 12.5 ou 12,5).</p>
+                </div>
+
+                <!-- Presets buttons -->
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Jeux de données prédéfinis :</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="loadPreset('cours')" class="text-xs px-2.5 py-1 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 rounded-lg text-slate-700 transition">Exemple du cours (7 val.)</button>
+                        <button onclick="loadPreset('notes')" class="text-xs px-2.5 py-1 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 rounded-lg text-slate-700 transition">Notes d'examen (15 val.)</button>
+                        <button onclick="loadPreset('outliers')" class="text-xs px-2.5 py-1 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 rounded-lg text-slate-700 transition">Avec Outlier (10 val.)</button>
+                        <button onclick="loadPreset('bimodale')" class="text-xs px-2.5 py-1 bg-slate-100 hover:bg-brand-50 hover:text-brand-700 rounded-lg text-slate-700 transition">Bimodale (12 val.)</button>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+                    <button onclick="clearDataset()" class="text-xs text-rose-600 hover:text-rose-800 font-medium transition">Effacer la liste</button>
+                    <div class="flex gap-2">
+                        <button onclick="closeDataModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg transition">Annuler</button>
+                        <button onclick="submitManualData()" class="px-4 py-1.5 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white rounded-lg shadow-sm transition">Valider les données</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Excel / CSV -->
+            <div id="tabContentExcel" class="pt-4 space-y-4 hidden">
+                <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-brand-400 transition bg-slate-50/50">
+                    <svg class="w-10 h-10 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <p class="text-xs text-slate-700 font-semibold mb-1">Sélectionnez un fichier Excel ou CSV</p>
+                    <p class="text-[11px] text-slate-400 mb-3">Formats supportés : .xlsx, .xls, .csv</p>
+                    <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" onchange="handleExcelFileSelect(this)" class="hidden">
+                    <button onclick="document.getElementById('excelFileInput').click()" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-lg shadow-xs transition">
+                        Parcourir les fichiers
+                    </button>
+                </div>
+
+                <!-- Excel Preview section -->
+                <div id="excelPreviewSection" class="hidden space-y-3 pt-2">
+                    <div class="p-3 bg-brand-50/60 rounded-xl border border-brand-100 flex items-center justify-between">
+                        <div>
+                            <span id="excelFileName" class="text-xs font-semibold text-slate-800">nom_du_fichier.xlsx</span>
+                            <span id="excelTotalRows" class="text-[11px] text-slate-500 ml-2">(100 lignes)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label for="excelColumnSelect" class="text-xs font-medium text-slate-700">Colonne :</label>
+                            <select id="excelColumnSelect" class="text-xs bg-white border border-slate-200 rounded-lg px-2 py-1 outline-none font-medium text-slate-800"></select>
+                        </div>
+                    </div>
+
+                    <!-- Table preview -->
+                    <div class="border border-slate-200 rounded-xl overflow-hidden max-h-40 overflow-y-auto">
+                        <table id="excelPreviewTable" class="w-full text-left text-xs"></table>
+                    </div>
+
+                    <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                        <button onclick="closeDataModal()" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-lg transition">Annuler</button>
+                        <button onclick="confirmExcelImport()" class="px-4 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm transition">
+                            Confirmer l'importation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- Global JavaScript Helper Functions -->
+    <script>
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-emerald-600' : 'bg-rose-600';
+            toast.className = `${bgClass} text-white px-4 py-2.5 rounded-xl text-xs font-medium shadow-lg flex items-center space-x-2 transition-all transform translate-y-2 opacity-0 pointer-events-auto`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function openDataModal() {
+            document.getElementById('dataModal').classList.remove('hidden');
+        }
+
+        function closeDataModal() {
+            document.getElementById('dataModal').classList.add('hidden');
+        }
+
+        function switchDataTab(tab) {
+            const btnManual = document.getElementById('tabBtnManual');
+            const btnExcel = document.getElementById('tabBtnExcel');
+            const contentManual = document.getElementById('tabContentManual');
+            const contentExcel = document.getElementById('tabContentExcel');
+
+            if (tab === 'manual') {
+                btnManual.className = "py-2 px-4 text-xs font-semibold border-b-2 border-brand-600 text-brand-600 transition";
+                btnExcel.className = "py-2 px-4 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition";
+                contentManual.classList.remove('hidden');
+                contentExcel.classList.add('hidden');
+            } else {
+                btnExcel.className = "py-2 px-4 text-xs font-semibold border-b-2 border-brand-600 text-brand-600 transition";
+                btnManual.className = "py-2 px-4 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 transition";
+                contentExcel.classList.remove('hidden');
+                contentManual.classList.add('hidden');
+            }
+        }
+
+        function submitManualData() {
+            const text = document.getElementById('manualInputText').value;
+            const formData = new FormData();
+            formData.append('data_text', text);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch("{% url 'stat_app:api_manual' %}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    closeDataModal();
+                    setTimeout(() => window.location.reload(), 400);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            })
+            .catch(err => showToast("Erreur de connexion.", 'error'));
+        }
+
+        function loadPreset(presetKey) {
+            const formData = new FormData();
+            formData.append('preset', presetKey);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch("{% url 'stat_app:api_preset' %}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    showToast("Jeu de données chargé avec succès !", 'success');
+                    setTimeout(() => window.location.reload(), 300);
+                }
+            });
+        }
+
+        function clearDataset() {
+            if (!confirm("Voulez-vous vraiment effacer toutes les données ?")) return;
+            const formData = new FormData();
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch("{% url 'stat_app:api_clear' %}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                showToast("Données réinitialisées.", 'success');
+                setTimeout(() => window.location.reload(), 300);
+            });
+        }
+
+        let selectedExcelFile = null;
+
+        function handleExcelFileSelect(input) {
+            if (!input.files || input.files.length === 0) return;
+            selectedExcelFile = input.files[0];
+
+            const formData = new FormData();
+            formData.append('file', selectedExcelFile);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch("{% url 'stat_app:api_excel_preview' %}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    document.getElementById('excelFileName').innerText = res.filename;
+                    document.getElementById('excelTotalRows').innerText = `(${res.total_rows} lignes trouvées)`;
+                    
+                    const select = document.getElementById('excelColumnSelect');
+                    select.innerHTML = '';
+                    if (res.numeric_columns.length === 0) {
+                        showToast("Aucune colonne numérique détectée dans ce fichier.", 'error');
+                        return;
+                    }
+                    res.numeric_columns.forEach(col => {
+                        const opt = document.createElement('option');
+                        opt.value = col;
+                        opt.textContent = col;
+                        select.appendChild(opt);
+                    });
+
+                    // Render preview table
+                    const table = document.getElementById('excelPreviewTable');
+                    let html = '<thead class="bg-slate-100 text-slate-700"><tr>';
+                    res.columns.forEach(c => html += `<th class="p-2 border-b border-slate-200 font-semibold">${c}</th>`);
+                    html += '</tr></thead><tbody>';
+                    res.preview_rows.forEach(row => {
+                        html += '<tr class="border-b border-slate-100 hover:bg-slate-50">';
+                        res.columns.forEach(c => html += `<td class="p-2 text-slate-600">${row[c] !== undefined ? row[c] : ''}</td>`);
+                        html += '</tr>';
+                    });
+                    html += '</tbody>';
+                    table.innerHTML = html;
+
+                    document.getElementById('excelPreviewSection').classList.remove('hidden');
+                } else {
+                    showToast(res.error, 'error');
+                }
+            })
+            .catch(err => showToast("Erreur lors de la lecture du fichier.", 'error'));
+        }
+
+        function confirmExcelImport() {
+            if (!selectedExcelFile) return;
+            const col = document.getElementById('excelColumnSelect').value;
+            const formData = new FormData();
+            formData.append('file', selectedExcelFile);
+            formData.append('column_name', col);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch("{% url 'stat_app:api_excel_confirm' %}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    showToast(res.message, 'success');
+                    closeDataModal();
+                    setTimeout(() => window.location.reload(), 400);
+                } else {
+                    showToast(res.error, 'error');
+                }
+            })
+            .catch(err => showToast("Erreur lors de l'importation.", 'error'));
+        }
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
